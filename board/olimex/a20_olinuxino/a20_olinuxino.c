@@ -217,9 +217,11 @@ static void mmc_pinmux_setup(int sdc)
 		/* SDC0: PF0-PF5 */
 		for (pin = SUNXI_GPF(0); pin <= SUNXI_GPF(5); pin++) {
 			sunxi_gpio_set_cfgpin(pin, SUNXI_GPF_SDC0);
-			sunxi_gpio_set_pull(pin, SUNXI_GPIO_PULL_UP);
 			sunxi_gpio_set_drv(pin, 2);
 		}
+		break;
+
+	case 1:
 		break;
 
 	case 2:
@@ -231,9 +233,12 @@ static void mmc_pinmux_setup(int sdc)
 		}
 		break;
 
-	case 1:
 	case 3:
-		break;
+		/* SDC3: PI4-PI9 */
+		for (pin = SUNXI_GPI(4); pin <= SUNXI_GPI(9); pin++) {
+			sunxi_gpio_set_cfgpin(pin, SUNXI_GPI_SDC3);
+			sunxi_gpio_set_drv(pin, 2);
+		}
 
 	default:
 		printf("sunxi: invalid MMC slot %d for pinmux setup\n", sdc);
@@ -243,24 +248,22 @@ static void mmc_pinmux_setup(int sdc)
 
 int board_mmc_init(bd_t *bis)
 {
-#if 0
-	struct olimex_config *config = olimex_get_eeprom_config();
+	struct mmc *mmc;
 
-	__maybe_unused struct mmc *mmc0, *mmc2;
-
-	mmc_pinmux_setup(CONFIG_MMC_SUNXI_SLOT);
-	mmc0 = sunxi_mmc_init(CONFIG_MMC_SUNXI_SLOT);
-	if (!mmc0)
+	/* Try to initialize MMC0 */
+	mmc_pinmux_setup(0);
+	mmc = sunxi_mmc_init(0);
+	if (!mmc)
 		return -1;
 
-	if (config->storage == 'e') {
+	/* Initialize MMC2 on boards with eMMC */
+	if (eeprom->config.storage == 'e') {
 		mmc_pinmux_setup(2);
-		mmc2 = sunxi_mmc_init(2);
-		if (!mmc2)
+		mmc = sunxi_mmc_init(2);
+		if (!mmc)
 			return -1;
 	}
 
-#endif
 	return 0;
 }
 #endif

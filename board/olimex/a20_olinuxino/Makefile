@@ -6,11 +6,8 @@
 
 obj-y   += a20_olinuxino.o
 obj-y   += board_detect.o
+obj-y   += boards.o
 
 obj-$(CONFIG_OF_BOARD_FIXUP)    += fdt.o
 obj-$(CONFIG_SUNXI_AHCI)        += ../../sunxi/ahci.o
 obj-$(CONFIG_MACH_SUN7I)        += ../../sunxi/dram_sun5i_auto.o
-
-ifndef CONFIG_SPL_BUILD
-obj-y   += boards.o
-endif

@@ -110,11 +110,6 @@
 #define CONFIG_SYS_SPI_U_BOOT_OFFS	0x8000
 #endif
 
-/* mmc config */
-#ifdef CONFIG_MMC
-#define CONFIG_MMC_SUNXI_SLOT		0
-#endif
-
 #if defined(CONFIG_ENV_IS_IN_MMC)
 #define CONFIG_SYS_MMC_ENV_DEV		0
 #define CONFIG_SYS_MMC_MAX_DEVICE	4

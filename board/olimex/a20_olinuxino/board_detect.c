@@ -167,69 +167,7 @@ bool olimex_eeprom_is_valid(void)
 	return (eeprom->header == OLIMEX_EEPROM_MAGIC_HEADER);
 }
 
-bool olimex_board_is_micro(void)
-{
-	switch (eeprom->id) {
-		case 4614:
-		case 8832:
-		case 8661:
-		case 8828:
-		case 4615:
-		case 8918:
-			return true;
 
-		default:
-			break;
-	}
-
-	return false;
-}
-
-bool olimex_board_is_lime(void)
-{
-	switch (eeprom->id) {
-		case 7739:
-		case 7743:
-		case 8934:
-			return true;
-
-		default:
-			break;
-	}
-
-	return false;
-}
-
-bool olimex_board_is_lime2(void)
-{
-	switch (eeprom->id) {
-		case 7701:
-		case 8340:
-		case 7624:
-		case 8910:
-		case 8946:
-			return true;
-
-		default:
-			break;
-	}
-
-	return false;
-}
-
-bool olimex_board_is_som204(void)
-{
-	switch (eeprom->id) {
-		case 8991:
-		case 8958:
-			return true;
-
-		default:
-			break;
-	}
-
-	return false;
-}
 
 #ifndef CONFIG_SPL_BUILD
 

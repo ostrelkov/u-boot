@@ -7,6 +7,7 @@
 #include <common.h>
 #include "boards.h"
 
+#ifndef CONFIG_SPLBUILD
 struct olinuxino_boards {
 	uint32_t id;
 	const char name[64];
@@ -206,4 +207,67 @@ const char *olimex_get_board_fdt(uint32_t id)
 		board++;
 	}
 	return "";
+}
+
+#endif
+
+bool olimex_board_is_micro(uint32_t id)
+{
+	switch (id) {
+		case 4614:
+		case 8832:
+		case 8661:
+		case 8828:
+		case 4615:
+		case 8918:
+			return true;
+
+		default:
+			return false;
+	}
+}
+
+bool olimex_board_is_lime(uint32_t id)
+{
+	switch (id) {
+		case 7739:
+		case 7743:
+		case 8934:
+			return true;
+
+		default:
+			return false;
+	}
+}
+
+bool olimex_board_is_lime2(uint32_t id)
+{
+	switch (id) {
+		case 7701:
+		case 8340:
+		case 7624:
+		case 8910:
+		case 8946:
+			return true;
+
+		default:
+			return false;
+	}
+}
+
+bool olimex_board_is_som204_evb(uint32_t id)
+{
+	switch (id) {
+		case 8991:
+		case 8958:
+			return true;
+
+		default:
+			return false;
+	}
+}
+
+bool olimex_board_is_som_evb(uint32_t id)
+{
+	return false;
 }

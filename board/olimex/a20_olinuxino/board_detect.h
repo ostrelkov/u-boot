@@ -73,9 +73,9 @@ const char *olimex_get_board_overlays(void);
 
 #endif
 
-bool olimex_board_is_micro(void);
-bool olimex_board_is_lime(void);
-bool olimex_board_is_lime2(void);
-bool olimex_board_is_som204(void);
+// bool olimex_board_is_micro(void);
+// bool olimex_board_is_lime(void);
+// bool olimex_board_is_lime2(void);
+// bool olimex_board_is_som204(void);
 
 #endif	/* __BOARD_DETECT_H */
