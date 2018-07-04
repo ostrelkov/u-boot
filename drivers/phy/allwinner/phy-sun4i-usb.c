@@ -91,20 +91,26 @@ struct sun4i_usb_phy_info {
 	int rst_mask;
 } phy_info[] = {
 	{
+#if 0
 		.gpio_vbus = CONFIG_USB0_VBUS_PIN,
 		.gpio_vbus_det = CONFIG_USB0_VBUS_DET,
 		.gpio_id_det = CONFIG_USB0_ID_DET,
+#endif
 		.rst_mask = (CCM_USB_CTRL_PHY0_RST | CCM_USB_CTRL_PHY0_CLK),
 	},
 	{
+#if 0
 		.gpio_vbus = CONFIG_USB1_VBUS_PIN,
 		.gpio_vbus_det = NULL,
 		.gpio_id_det = NULL,
+#endif
 		.rst_mask = (CCM_USB_CTRL_PHY1_RST | CCM_USB_CTRL_PHY1_CLK),
 	},
 	{
+#if 0
 		.gpio_vbus = CONFIG_USB2_VBUS_PIN,
 		.gpio_vbus_det = NULL,
+#endif
 		.gpio_id_det = NULL,
 #ifdef CONFIG_MACH_SUN8I_A83T
 		.rst_mask = (CCM_USB_CTRL_HSIC_RST | CCM_USB_CTRL_HSIC_CLK |
@@ -114,9 +120,11 @@ struct sun4i_usb_phy_info {
 #endif
 	},
 	{
+#if 0
 		.gpio_vbus = CONFIG_USB3_VBUS_PIN,
 		.gpio_vbus_det = NULL,
 		.gpio_id_det = NULL,
+#endif
 #ifdef CONFIG_MACH_SUN6I
 		.rst_mask = (CCM_USB_CTRL_PHY3_RST | CCM_USB_CTRL_PHY3_CLK),
 #endif
