@@ -206,7 +206,7 @@ int dram_init(void)
 	return 0;
 }
 
-#ifdef CONFIG_MMC
+#ifdef CONFIG_SPL_BUILD
 static void mmc_pinmux_setup(int sdc)
 {
 	unsigned int pin;
@@ -221,9 +221,6 @@ static void mmc_pinmux_setup(int sdc)
 		}
 		break;
 
-	case 1:
-		break;
-
 	case 2:
 		/* SDC2: PC6-PC11 */
 		for (pin = SUNXI_GPC(6); pin <= SUNXI_GPC(11); pin++) {
@@ -233,15 +230,7 @@ static void mmc_pinmux_setup(int sdc)
 		}
 		break;
 
-	case 3:
-		/* SDC3: PI4-PI9 */
-		for (pin = SUNXI_GPI(4); pin <= SUNXI_GPI(9); pin++) {
-			sunxi_gpio_set_cfgpin(pin, SUNXI_GPI_SDC3);
-			sunxi_gpio_set_drv(pin, 2);
-		}
-
 	default:
-		printf("sunxi: invalid MMC slot %d for pinmux setup\n", sdc);
 		break;
 	}
 }
@@ -249,6 +238,8 @@ static void mmc_pinmux_setup(int sdc)
 int board_mmc_init(bd_t *bis)
 {
 	struct mmc *mmc;
+
+	printf("aaaa\n");
 
 	/* Try to initialize MMC0 */
 	mmc_pinmux_setup(0);
@@ -266,9 +257,7 @@ int board_mmc_init(bd_t *bis)
 
 	return 0;
 }
-#endif
 
-#ifdef CONFIG_SPL_BUILD
 void sunxi_board_init(void)
 {
 	int power_failed = 0;
@@ -481,11 +470,6 @@ static void setup_environment(const void *fdt)
 	if (!env_get("fdtfile"))
 		env_set("fdtfile", olimex_get_board_fdt(eeprom->id));
 
-#if 0
-	if (!env_get("olinuxino_overlays"))
-		env_set("olinuxino_overlays", olimex_get_board_overlays());
-#endif
-
 }
 
 int misc_init_r(void)
@@ -539,7 +523,6 @@ int ft_board_setup(void *blob, bd_t *bd)
 
 int show_board_info(void)
 {
-	struct olimex_revision *rev;
 	const char *name;
 	char *mac = eeprom->mac;
 
