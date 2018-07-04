@@ -281,6 +281,26 @@ config MACH_SUN50I_H5
 
 endchoice
 
+# Check use of auto-detect feature on olinuxino boards
+if MACH_SUN7I
+choice
+	prompt "SUNXI profile select"
+
+config TARGET_SUNXI_DEFAULT
+	bool "Default sunxi target"
+	---help---
+	Use the default profile for sunxi boards
+
+config TARGET_A20_OLINUXINO
+	bool "OLinuXino board"
+	select I2C1_ENABLE
+	select SPL_SPI_SUNXI
+	---help---
+	Use board autodetection feature on A20-OLinuXino boards
+
+endchoice
+endif
+
 # The sun8i SoCs share a lot, this helps to avoid a lot of "if A23 || A33"
 config MACH_SUN8I
 	bool
@@ -494,6 +514,7 @@ config SYS_CLK_FREQ
 	default 1008000000 if MACH_SUN8I
 	default 1008000000 if MACH_SUN9I
 
+if TARGET_SUNXI_DEFAULT
 config SYS_CONFIG_NAME
 	default "sun4i" if MACH_SUN4I
 	default "sun5i" if MACH_SUN5I
@@ -505,6 +526,11 @@ config SYS_CONFIG_NAME
 
 config SYS_BOARD
 	default "sunxi"
+endif
+
+if TARGET_A20_OLINUXINO
+	source "board/olimex/a20_olinuxino/Kconfig"
+endif
 
 config SYS_SOC
 	default "sunxi"
@@ -527,6 +553,7 @@ config OLD_SUNXI_KERNEL_COMPAT
 	Set this to enable various workarounds for old kernels, this results in
 	sub-optimal settings for newer kernels, only enable if needed.
 
+if !TARGET_A20_OLINUXINO
 config MACPWR
 	string "MAC power pin"
 	default ""
@@ -587,6 +614,7 @@ config MMC_SUNXI_SLOT_EXTRA
 	sunxi builds always enable mmc0, some boards also have a second sdcard
 	slot or emmc on mmc1 - mmc3. Setting this to 1, 2 or 3 will enable
 	support for this.
+endif
 
 config INITIAL_USB_SCAN_DELAY
 	int "delay initial usb scan by x ms to allow builtin devices to init"
@@ -597,6 +625,7 @@ config INITIAL_USB_SCAN_DELAY
 	option to a non 0 value to add an extra delay before the first usb
 	bus scan.
 
+if !TARGET_A20_OLINUXINO
 config USB0_VBUS_PIN
 	string "Vbus enable pin for usb0 (otg)"
 	default ""
@@ -639,6 +668,7 @@ config USB3_VBUS_PIN
 	default ""
 	---help---
 	See USB1_VBUS_PIN help text.
+endif
 
 config I2C0_ENABLE
 	bool "Enable I2C/TWI controller 0"
@@ -917,6 +947,7 @@ config VIDEO_LCD_TL059WV5C0
 
 endchoice
 
+if !TARGET_A20_OLINUXINO
 config SATAPWR
 	string "SATA power pin"
 	default ""
@@ -930,6 +961,7 @@ config GMAC_TX_DELAY
 	default 0
 	---help---
 	Set the GMAC Transmit Clock Delay Chain value.
+endif
 
 config SPL_STACK_R_ADDR
 	default 0x4fe00000 if MACH_SUN4I
