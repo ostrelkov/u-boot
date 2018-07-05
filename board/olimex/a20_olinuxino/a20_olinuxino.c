@@ -123,6 +123,9 @@ enum env_location env_get_location(enum env_operation op, int prio)
 	case 1:
 		return ENVL_MMC;
 
+	case 2:
+		return ENVL_SPI_FLASH;
+
 	default:
 		return ENVL_UNKNOWN;
 	}
