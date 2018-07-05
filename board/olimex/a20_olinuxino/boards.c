@@ -20,7 +20,7 @@ static struct olinuxino_boards olinuxino_boards[] = {
 	{
 		.id = 7739,
 		.name = "A20-OLinuXino-LIME",
-		.fdt = "sun7i-a20-olinuxino-lime.dtb",
+		.fdt = "sun7i-a20-olinuxino-lime",
 		// .config = {
 		// 	.ram = MBYTES(SIZE_512),
 		// },
@@ -28,7 +28,7 @@ static struct olinuxino_boards olinuxino_boards[] = {
 	{
 		.id = 7743,
 		.name = "A20-OLinuXino-LIME-n4GB",
-		.fdt = "sun7i-a20-olinuxino-lime.dtb",
+		.fdt = "sun7i-a20-olinuxino-lime",
 		// .config = {
 		// 	.storage = STORAGE_NAND,
 		// 	.size = GBYTES(SIZE_4),
@@ -38,7 +38,7 @@ static struct olinuxino_boards olinuxino_boards[] = {
 	{
 		.id = 8934,
 		.name = "A20-OLinuXino-LIME-n8GB",
-		.fdt = "sun7i-a20-olinuxino-lime.dtb",
+		.fdt = "sun7i-a20-olinuxino-lime",
 		// .config = {
 		// 	.storage = STORAGE_NAND,
 		// 	.size = GBYTES(SIZE_8),
@@ -50,7 +50,7 @@ static struct olinuxino_boards olinuxino_boards[] = {
 	{
 		.id = 7701,
 		.name = "A20-OLinuXIno-LIME2",
-		.fdt = "sun7i-a20-olinuxino-lime2.dtb",
+		.fdt = "sun7i-a20-olinuxino-lime2",
 		// .config = {
 		// 	.size = GBYTES(SIZE_1),
 		// },
@@ -58,7 +58,7 @@ static struct olinuxino_boards olinuxino_boards[] = {
 	{
 		.id = 8340,
 		.name = "A20-OLinuXino-LIME2-e4GB",
-		.fdt = "sun7i-a20-olinuxino-lime2-emmc.dtb",
+		.fdt = "sun7i-a20-olinuxino-lime2-emmc",
 		// .config = {
 		// 	.storage = STORAGE_EMMC,
 		// 	.size = GBYTES(SIZE_4),
@@ -68,7 +68,7 @@ static struct olinuxino_boards olinuxino_boards[] = {
 	{
 		.id = 7624,
 		.name = "A20-OLinuXIno-LIME2-n4GB",
-		.fdt = "sun7i-a20-olinuxino-lime2.dtb",
+		.fdt = "sun7i-a20-olinuxino-lime2",
 		// .config = {
 		// 	.storage = STORAGE_NAND,
 		// 	.size = GBYTES(SIZE_4),
@@ -78,7 +78,7 @@ static struct olinuxino_boards olinuxino_boards[] = {
 	{
 		.id = 8910,
 		.name = "A20-OLinuXIno-LIME2-n8GB",
-		.fdt = "sun7i-a20-olinuxino-lime2.dtb",
+		.fdt = "sun7i-a20-olinuxino-lime2",
 		// .config = {
 		// 	.storage = STORAGE_NAND,
 		// 	.size = GBYTES(SIZE_4),
@@ -88,7 +88,7 @@ static struct olinuxino_boards olinuxino_boards[] = {
 	{
 		.id = 8946,
 		.name = "A20-OLinuXIno-LIME2-s16MB",
-		.fdt = "sun7i-a20-olinuxino-lime2.dtb",
+		.fdt = "sun7i-a20-olinuxino-lime2",
 		.overlays = "spi-flash",
 		// .config = {
 		// 	.storage = STORAGE_FLASH,
@@ -101,7 +101,7 @@ static struct olinuxino_boards olinuxino_boards[] = {
 	{
 		.id = 4614,
 		.name = "A20-OLinuXino-MICRO",
-		.fdt = "sun7i-a20-olinuxino-micro.dtb",
+		.fdt = "sun7i-a20-olinuxino-micro",
 		// .config = {
 		// 	.ram = GBYTES(SIZE_1),
 		// },
@@ -109,7 +109,7 @@ static struct olinuxino_boards olinuxino_boards[] = {
 	{
 		.id = 8832,
 		.name = "A20-OLinuXino-MICRO-e4GB",
-		.fdt = "sun7i-a20-olinuxino-micro-emmc.dtb",
+		.fdt = "sun7i-a20-olinuxino-micro-emmc",
 		// .config = {
 		// 	.storage = STORAGE_EMMC,
 		// 	.size = GBYTES(SIZE_4),
@@ -117,9 +117,14 @@ static struct olinuxino_boards olinuxino_boards[] = {
 		// },
 	},
 	{
+		.id = 9042,
+		.name = "A20-OLinuXino-MICRO-e16GB",
+		.fdt = "sun7i-a20-olinuxino-micro-emmc",
+	},
+	{
 		.id = 8661,
 		.name = "A20-OLinuXino-MICRO-e4GB-IND",
-		.fdt = "sun7i-a20-olinuxino-micro-emmc.dtb",
+		.fdt = "sun7i-a20-olinuxino-micro-emmc",
 		// .config = {
 		// 	.storage = STORAGE_EMMC,
 		// 	.size = GBYTES(SIZE_4),
@@ -130,7 +135,7 @@ static struct olinuxino_boards olinuxino_boards[] = {
 	{
 		.id = 8828,
 		.name = "A20-OLinuXino-MICRO-IND",
-		.fdt = "sun7i-a20-olinuxino-micro.dtb",
+		.fdt = "sun7i-a20-olinuxino-micro",
 		// .config = {
 		// 	.ram = GBYTES(SIZE_1),
 		// 	.grade = INDUSTRIAL_GRADE,
@@ -139,7 +144,7 @@ static struct olinuxino_boards olinuxino_boards[] = {
 	{
 		.id = 4615,
 		.name = "A20-OLinuXino-MICRO-n4GB",
-		.fdt = "sun7i-a20-olinuxino-micro.dtb",
+		.fdt = "sun7i-a20-olinuxino-micro",
 		// .config = {
 		// 	.storage = STORAGE_NAND,
 		// 	.size = GBYTES(SIZE_4),
@@ -149,7 +154,7 @@ static struct olinuxino_boards olinuxino_boards[] = {
 	{
 		.id = 8918,
 		.name = "A20-OLinuXino-MICRO-n8GB",
-		.fdt = "sun7i-a20-olinuxino-micro.dtb",
+		.fdt = "sun7i-a20-olinuxino-micro",
 		// .config = {
 		// 	.storage = STORAGE_NAND,
 		// 	.size = GBYTES(SIZE_8),
@@ -161,7 +166,7 @@ static struct olinuxino_boards olinuxino_boards[] = {
 	{
 		.id = 8991,
 		.name = "A20-SOM204",
-		.fdt = "sun7i-a20-olimex-som204-evb.dtb",
+		.fdt = "sun7i-a20-olimex-som204-evb",
 		// .config = {
 		// 	.ram = GBYTES(SIZE_1)
 		// },
@@ -169,7 +174,7 @@ static struct olinuxino_boards olinuxino_boards[] = {
 	{
 		.id = 8958,
 		.name = "A20-SOM204-1Gs16Me16G-MC",
-		.fdt = "sun7i-a20-olimex-som204-evb-emmc.dtb",
+		.fdt = "sun7i-a20-olimex-som204-evb-emmc",
 		.overlays = "atecc508a ir0 spi-flash",
 		// .config = {
 		// 	.storage = STORAGE_EMMC,

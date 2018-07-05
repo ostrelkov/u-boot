@@ -40,27 +40,27 @@ DECLARE_GLOBAL_DATA_PTR;
 
 void eth_init_board(void)
 {
-	#if 0
 	static struct sunxi_ccm_reg *const ccm =
 		(struct sunxi_ccm_reg *)SUNXI_CCM_BASE;
-	struct olimex_revision *rev;
 	uint8_t tx_delay = 0;
 	uint8_t mode;
 	int pin;
 
- 	mode = (olimex_board_is_lime() || olimex_board_is_micro()) ?
+	if (!olimex_eeprom_is_valid())
+		return;
+
+ 	mode = (olimex_board_is_lime(eeprom->id) ||
+		olimex_board_is_micro(eeprom->id)) ?
  		GMAC_MODE_MII : GMAC_MODE_RGMII;
 
-	if (olimex_board_is_lime2()) {
-		rev = olimex_get_eeprom_revision();
-
-		if (rev->major > 'E')
+	if (olimex_board_is_lime2(eeprom->id)) {
+		if (eeprom->revision.major > 'E')
 			/* RTL8211E */
 			tx_delay = 2;
-		else if (rev->major > 'G')
+		else if (eeprom->revision.major > 'G')
 			/* KSZ9031 */
 			tx_delay = 4;
-	} else if (olimex_board_is_som204()) {
+	} else if (olimex_board_is_som204_evb(eeprom->id)) {
 		tx_delay = 4;
 	}
 
@@ -92,11 +92,10 @@ void eth_init_board(void)
 		sunxi_gpio_set_drv(pin, 3);
 	}
 
-	if (olimex_board_is_micro()) {
+	/* A20-OLinuXino-MICRO needs additional signal for TXERR */
+	if (olimex_board_is_micro(eeprom->id)) {
 		sunxi_gpio_set_cfgpin(SUNXI_GPA(17),  SUN7I_GPA_GMAC);
 	}
-
-#endif
 }
 
 void i2c_init_board(void)
@@ -165,36 +164,35 @@ int board_init(void)
 	}
 
 	axp_gpio_init();
-#if 0
-	/*
-	 * Setup SATAPWR
-	 */
-	if(olimex_board_is_micro())
-		satapwr_pin = sunxi_name_to_gpio("PB8");
-	else if(olimex_board_is_lime() || olimex_board_is_lime2())
-		satapwr_pin = sunxi_name_to_gpio("PC3");
-	else
-		satapwr_pin = sunxi_name_to_gpio("");
 
-	if(satapwr_pin > 0) {
-		gpio_request(satapwr_pin, "satapwr");
-		gpio_direction_output(satapwr_pin, 1);
-		/* Give attached sata device time to power-up to avoid link timeouts */
-		mdelay(500);
+	if (olimex_eeprom_is_valid()) {
+		/*
+		 * Setup SATAPWR
+		 */
+		if(olimex_board_is_micro(eeprom->id))
+			satapwr_pin = sunxi_name_to_gpio("PB8");
+		else
+			satapwr_pin = sunxi_name_to_gpio("PC3");
+
+		if(satapwr_pin > 0) {
+			gpio_request(satapwr_pin, "satapwr");
+			gpio_direction_output(satapwr_pin, 1);
+			/* Give attached sata device time to power-up to avoid link timeouts */
+			mdelay(500);
+		}
+
+		/*
+		 * A20-SOM204 needs manual reset for rt8723bs chip
+		 */
+		if (olimex_board_is_som204_evb(eeprom->id)) {
+			btpwr_pin = sunxi_name_to_gpio("PB11");
+
+			gpio_request(btpwr_pin, "btpwr");
+			gpio_direction_output(btpwr_pin, 0);
+			mdelay(100);
+			gpio_direction_output(btpwr_pin, 1);
+		}
 	}
-
-	/*
-	 * A20-SOM204 needs manual reset for rt8723bs chip
-	 */
-	if (olimex_board_is_som204()) {
-		btpwr_pin = sunxi_name_to_gpio("PB11");
-
-		gpio_request(btpwr_pin, "btpwr");
-		gpio_direction_output(btpwr_pin, 0);
-		mdelay(100);
-		gpio_direction_output(btpwr_pin, 1);
-	}
-	#endif
 
 	return 0;
 }
@@ -210,7 +208,6 @@ int dram_init(void)
 static void mmc_pinmux_setup(int sdc)
 {
 	unsigned int pin;
-	__maybe_unused int pins;
 
 	switch (sdc) {
 	case 0:
@@ -239,20 +236,24 @@ int board_mmc_init(bd_t *bis)
 {
 	struct mmc *mmc;
 
-	printf("aaaa\n");
-
 	/* Try to initialize MMC0 */
 	mmc_pinmux_setup(0);
 	mmc = sunxi_mmc_init(0);
-	if (!mmc)
+	if (!mmc) {
+		printf("Failed to init MMC0!\n");
 		return -1;
+	}
+
+
 
 	/* Initialize MMC2 on boards with eMMC */
 	if (eeprom->config.storage == 'e') {
 		mmc_pinmux_setup(2);
 		mmc = sunxi_mmc_init(2);
-		if (!mmc)
+		if (!mmc) {
+			printf("Failed to init MMC2!\n");
 			return -1;
+		}
 	}
 
 	return 0;
@@ -390,7 +391,6 @@ static void parse_spl_header(const uint32_t spl_addr)
  */
 static void setup_environment(const void *fdt)
 {
-	struct olimex_revision *rev;
 	char serial_string[17] = { 0 };
 	unsigned int sid[4];
 	uint8_t mac_addr[6] = { 0, 0, 0, 0, 0, 0 };
@@ -526,32 +526,40 @@ int show_board_info(void)
 	const char *name;
 	char *mac = eeprom->mac;
 
-	if (olimex_eeprom_is_valid()) {
-
-		/* Get board name and compare if with eeprom content */
-		name = olimex_get_board_name(eeprom->id);
-
-		printf("Model: %s Rev.%c%c\n", name,
-		       (eeprom->revision.major < 'A' ||
-			eeprom->revision.major > 'Z') ?
-			0 : eeprom->revision.major,
-		       (eeprom->revision.minor < '1' ||
-			eeprom->revision.minor > '9') ?
-			0 : eeprom->revision.minor);
-
-		printf("Serial:%08X\n", eeprom->serial);
-		printf("MAC:   %c%c:%c%c:%c%c:%c%c:%c%c:%c%c\n",
-		       mac[0], mac[1], mac[2], mac[3], mac[4], mac[5],
-		       mac[6], mac[7], mac[8], mac[9], mac[10], mac[11]);
-	} else {
+	if (!olimex_eeprom_is_valid()) {
 		printf("Model: Unknown\n");
+		return 0;
 	}
+
+	/* Get board name and compare if with eeprom content */
+	name = olimex_get_board_name(eeprom->id);
+
+	printf("Model: %s Rev.%c%c\n", name,
+	       (eeprom->revision.major < 'A' || eeprom->revision.major > 'Z') ?
+		0 : eeprom->revision.major,
+	       (eeprom->revision.minor < '1' || eeprom->revision.minor > '9') ?
+		0 : eeprom->revision.minor);
+
+	printf("Serial:%08X\n", eeprom->serial);
+	printf("MAC:   %c%c:%c%c:%c%c:%c%c:%c%c:%c%c\n",
+	       mac[0], mac[1], mac[2], mac[3], mac[4], mac[5],
+	       mac[6], mac[7], mac[8], mac[9], mac[10], mac[11]);
+
 	return 0;
 }
 
+#if defined(CONFIG_MULTI_DTB_FIT)
+int board_fit_config_name_match(const char *name)
+{
+	if (!olimex_eeprom_is_valid())
+		return -1;
+
+	return (!strcmp(name, olimex_get_board_fdt(eeprom->id))) ? 0 : -1;
+}
+#endif
+
 
 #ifndef CONFIG_SPL_BUILD
-
 int mmc_get_env_dev(void)
 {
 	unsigned long bootdev = 0;
