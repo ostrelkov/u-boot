@@ -199,11 +199,11 @@ static int board_fix_spi_flash(void *blob)
 		return offset;
 	}
 
-	phandle = fdt32_to_cpu(fdt_get_max_phandle(blob) + 1);
+	phandle = fdt_get_max_phandle(blob) + 1;
 
-	ret |= fdt_setprop_u32(blob, offset, "phandle", cpu_to_fdt32(phandle));
-	ret |= fdt_setprop_u32(blob, offset, "allwinner,pull", cpu_to_fdt32(0));
-	ret |= fdt_setprop_u32(blob, offset, "allwinner,drive", cpu_to_fdt32(0));
+	ret |= fdt_setprop_u32(blob, offset, "phandle", phandle);
+	ret |= fdt_setprop_u32(blob, offset, "allwinner,pull", 0);
+	ret |= fdt_setprop_u32(blob, offset, "allwinner,drive", 0);
 	ret |= fdt_setprop_string(blob, offset, "allwinner,function" , "spi0");
 
 	ret |= fdt_setprop_string(blob, offset, "allwinner,pins" , "PC0");
@@ -221,6 +221,7 @@ static int board_fix_spi_flash(void *blob)
 	 * Change following properties:
 	 *   - pinctrl-names = "default";
 	 *   - pinctrl-0 = <&spi0@1>;
+	 *   - spi-max-frequency = <20000000>;
 	 *   - status = "okay";
 	 *
 	 * Test:
@@ -234,7 +235,8 @@ static int board_fix_spi_flash(void *blob)
 
 	/* Change status to okay */
 	ret |= fdt_setprop_string(blob, offset, "status" , "okay");
-	ret |= fdt_setprop_u32(blob, offset, "pinctrl-0", cpu_to_fdt32(phandle));
+	ret |= fdt_setprop_u32(blob, offset, "spi-max-frequency", 20000000);
+	ret |= fdt_setprop_u32(blob, offset, "pinctrl-0", phandle);
 	ret |= fdt_setprop_string(blob, offset, "pinctrl-names", "default");
 	if (ret < 0) {
 		printf("Failed to update properties for spi0@0 node: %s (%d)\n", fdt_strerror(ret), ret);
@@ -259,10 +261,10 @@ static int board_fix_spi_flash(void *blob)
 	}
 
 	ret |= fdt_setprop_string(blob, offset, "status" , "okay");
-	ret |= fdt_setprop_u32(blob, offset, "spi-max-frequency", cpu_to_fdt32(20000000));
-	ret |= fdt_setprop_u32(blob, offset, "#reg", cpu_to_fdt32(0));
-	ret |= fdt_setprop_u32(blob, offset, "#size-cells", cpu_to_fdt32(1));
-	ret |= fdt_setprop_u32(blob, offset, "#address-cells", cpu_to_fdt32(1));
+	ret |= fdt_setprop_u32(blob, offset, "spi-max-frequency", 20000000);
+	ret |= fdt_setprop_u32(blob, offset, "#reg", 0);
+	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 1);
+	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 1);
 	ret |= fdt_setprop_string(blob, offset, "compatible", "winbond,w25q128");
 	ret |= fdt_appendprop_string(blob, offset, "compatible", "jedec,spi-nor");
 	ret |= fdt_appendprop_string(blob, offset, "compatible", "spi-flash");

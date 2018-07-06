@@ -113,24 +113,36 @@ void i2c_init_board(void)
 #endif
 }
 
-#if defined(CONFIG_ENV_IS_IN_MMC) && defined(CONFIG_ENV_IS_IN_FAT)
+#if defined(CONFIG_ENV_IS_IN_EXT4) || \
+    defined(CONFIG_ENV_IS_IN_FAT) || \
+    defined(CONFIG_ENV_IS_IN_SPI_FLASH)
 enum env_location env_get_location(enum env_operation op, int prio)
 {
-	switch (prio) {
-	case 0:
-		return ENVL_FAT;
+	uint32_t boot = sunxi_get_boot_device();
+	debug("%s(): prio: %d, boot: %d\n", __func__, prio, boot);
 
-	case 1:
-		return ENVL_MMC;
+	switch (boot) {
+		case BOOT_DEVICE_BOARD:
+			return ENVL_NOWHERE;
 
-	case 2:
-		return ENVL_SPI_FLASH;
+		case BOOT_DEVICE_SPI:
+			return ENVL_SPI_FLASH;
 
-	default:
-		return ENVL_UNKNOWN;
+		case BOOT_DEVICE_MMC1:
+		case BOOT_DEVICE_MMC2:
+			if (prio == 0)
+				return ENVL_EXT4;
+			else if (prio == 1)
+				return ENVL_FAT;
+			else
+				return ENVL_UNKNOWN;
+
+		default:
+			return ENVL_UNKNOWN;
 	}
 }
 #endif
+
 
 /* add board specific code here */
 int board_init(void)
