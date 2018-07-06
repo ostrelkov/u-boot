@@ -48,6 +48,7 @@ CONFIG_TARGET_A20_OLINUXINO=y
 CONFIG_OF_LIBFDT_OVERLAY=y
 CONFIG_FIT=y
 CONFIG_OF_BOARD_FIXUP=y
+CONFIG_OF_SYSTEM_SETUP=y
 
 CONFIG_OF_LIST="sun7i-a20-olinuxino-micro sun7i-a20-olinuxino-micro-emmc sun7i-a20-olinuxino-lime sun7i-a20-olinuxino-lime-emmc"
 CONFIG_MULTI_DTB_FIT=y

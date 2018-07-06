@@ -202,14 +202,12 @@ static int board_fix_spi_flash(void *blob)
 	phandle = fdt_get_max_phandle(blob) + 1;
 
 	ret |= fdt_setprop_u32(blob, offset, "phandle", phandle);
-	ret |= fdt_setprop_u32(blob, offset, "allwinner,pull", 0);
-	ret |= fdt_setprop_u32(blob, offset, "allwinner,drive", 0);
-	ret |= fdt_setprop_string(blob, offset, "allwinner,function" , "spi0");
+	ret |= fdt_setprop_string(blob, offset, "function" , "spi0");
 
-	ret |= fdt_setprop_string(blob, offset, "allwinner,pins" , "PC0");
-	ret |= fdt_appendprop_string(blob, offset, "allwinner,pins", "PC1");
-	ret |= fdt_appendprop_string(blob, offset, "allwinner,pins", "PC2");
-	ret |= fdt_appendprop_string(blob, offset, "allwinner,pins", "PC23");
+	ret |= fdt_setprop_string(blob, offset, "pins" , "PC0");
+	ret |= fdt_appendprop_string(blob, offset, "pins", "PC1");
+	ret |= fdt_appendprop_string(blob, offset, "pins", "PC2");
+	ret |= fdt_appendprop_string(blob, offset, "pins", "PC23");
 	if (ret < 0) {
 		printf("Failed to populate spi0@1 subnode: %s (%d)\n", fdt_strerror(ret), ret);
 		return ret;
@@ -294,6 +292,7 @@ static int board_fix_spi_flash(void *blob)
 	return 0;
 }
 
+#if defined(CONFIG_OF_BOARD_FIXUP)
 int board_fix_fdt(void *blob)
 {
 	int ret;
@@ -306,19 +305,22 @@ int board_fix_fdt(void *blob)
 		return ret;
 	}
 
-
-#if 0
-	if ((ret = board_fix_gmac(blob)) < 0)
-		return ret;
-
-	if ((ret = board_fix_emac(blob)) < 0)
-		return ret;
-#endif
-	if ((ret = board_fix_spi_flash(blob)) < 0)
-		return ret;
-
-
-
-
-	return 0;
+	return board_fix_spi_flash(blob);
 }
+#endif
+
+#if defined(CONFIG_OF_SYSTEM_SETUP)
+int ft_system_setup(void *blob, bd_t *bd)
+{
+	int ret;
+
+	debug("Address of FDT blob: %p\n", (uint32_t *)blob);
+	ret = fdt_increase_size(blob, 512);
+	if (ret < 0) {
+		printf("Failed to increase size: %s (%d)\n", fdt_strerror(ret), ret);
+		return ret;
+	}
+
+	return board_fix_spi_flash(blob);
+}
+#endif
