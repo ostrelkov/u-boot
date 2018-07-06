@@ -10,6 +10,8 @@
 #ifndef __BOARDS_H
 #define __BOARDS_H
 
+#define OLINUXINO_BOARD(__id, __name, __fdt) { .id = __id, .name = __name, .fdt = __fdt, }
+
 const char *olimex_get_board_name(uint32_t id);
 const char *olimex_get_board_fdt(uint32_t id);
 
