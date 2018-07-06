@@ -21,9 +21,9 @@ static struct olinuxino_boards olinuxino_boards[] = {
 	OLINUXINO_BOARD(8934, "A20-OLinuXino-LIME-n8GB", "sun7i-a20-olinuxino-lime"),
 
 	/* T2-OLinuXino-Lime */
-	OLINUXINO_BOARD(9211, "T2-OLinuXino-LIME-IND", "sun7i-a20-olinuxino-lime");
-	OLINUXINO_BOARD(9215, "T2-OLinuXino-LIME-s16MB-IND", "sun7i-a20-olinuxino-lime");
-	OLINUXINO_BOARD(9219, "T2-OLinuXino-LIME-e4GB-IND", "sun7i-a20-olinuxino-lime-emmc");
+	OLINUXINO_BOARD(9211, "T2-OLinuXino-LIME-IND", "sun7i-a20-olinuxino-lime"),
+	OLINUXINO_BOARD(9215, "T2-OLinuXino-LIME-s16MB-IND", "sun7i-a20-olinuxino-lime"),
+	OLINUXINO_BOARD(9219, "T2-OLinuXino-LIME-e4GB-IND", "sun7i-a20-olinuxino-lime-emmc"),
 
 	/* A20-OLinuXino-Lime2 */
 	OLINUXINO_BOARD(7701, "A20-OLinuXino-LIME2", "sun7i-a20-olinuxino-lime2"),
@@ -104,10 +104,14 @@ bool olimex_board_is_micro(uint32_t id)
 	switch (id) {
 		case 4614:
 		case 8832:
+		case 9042:
 		case 8661:
 		case 8828:
 		case 4615:
 		case 8918:
+		case 9223:
+		case 9235:
+		case 9227:
 			return true;
 
 		default:
@@ -121,6 +125,9 @@ bool olimex_board_is_lime(uint32_t id)
 		case 7739:
 		case 7743:
 		case 8934:
+		case 9211:
+		case 9215:
+		case 9219:
 			return true;
 
 		default:
@@ -136,6 +143,9 @@ bool olimex_board_is_lime2(uint32_t id)
 		case 7624:
 		case 8910:
 		case 8946:
+		case 9239:
+		case 9247:
+		case 9243:
 			return true;
 
 		default:
@@ -143,6 +153,22 @@ bool olimex_board_is_lime2(uint32_t id)
 	}
 }
 
+bool olimex_board_is_som_evb(uint32_t id)
+{
+	switch (id) {
+		case 4673:
+		case 7664:
+		case 8849:
+		case 8922:
+		case 9155:
+		case 9148:
+		case 9259:
+			return true;
+
+		default:
+			return false;
+	}
+}
 bool olimex_board_is_som204_evb(uint32_t id)
 {
 	switch (id) {
@@ -153,9 +179,4 @@ bool olimex_board_is_som204_evb(uint32_t id)
 		default:
 			return false;
 	}
-}
-
-bool olimex_board_is_som_evb(uint32_t id)
-{
-	return false;
 }
