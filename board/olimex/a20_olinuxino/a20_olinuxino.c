@@ -537,13 +537,13 @@ int show_board_info(void)
 	/* Get board name and compare if with eeprom content */
 	name = olimex_get_board_name(eeprom->id);
 
-	printf("Model: %s Rev.%c%c\n", name,
+	printf("Model: %s Rev.%c%c", name,
 	       (eeprom->revision.major < 'A' || eeprom->revision.major > 'Z') ?
-		0 : eeprom->revision.major,
+	       0 : eeprom->revision.major,
 	       (eeprom->revision.minor < '1' || eeprom->revision.minor > '9') ?
-		0 : eeprom->revision.minor);
+	       0 : eeprom->revision.minor);
 
-	printf("Serial:%08X\n", eeprom->serial);
+	printf("\nSerial:%08X\n", eeprom->serial);
 	printf("MAC:   %c%c:%c%c:%c%c:%c%c:%c%c:%c%c\n",
 	       mac[0], mac[1], mac[2], mac[3], mac[4], mac[5],
 	       mac[6], mac[7], mac[8], mac[9], mac[10], mac[11]);

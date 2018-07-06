@@ -159,17 +159,73 @@ static int board_fix_gmac(void *blob)
 	return 0;
 }
 
+#endif
 static int board_fix_spi_flash(void *blob)
 {
-	struct olimex_config *config = olimex_get_board_config();
-	uint32_t id = olimex_get_eeprom_id();
+	uint32_t phandle;
 	int offset;
-	int ret;
+	int ret = 0;
 
-	if (config->storage != STORAGE_FLASH && id != 8958)
-		return 0;
+	/**
+	 * Some boards, have both eMMC and SPI flash:
+	 *   - A20-SOM204-1Gs16Me16G-MC (8958)
+	 */
+	// if (eeprom->config.storage != 's' && eeprom->id != 8958)
+	// 	return 0;
 
-	/* Find /soc@01c00000/spi@01c05000 */
+
+	/*
+	 * Find /soc@01c00000/pinctrl@01c20800
+	 * Add following properties:
+	 *     spi0@1 {
+	 *         allwinner,pins = "PC0", "PC1", "PC2", "PC23";
+	 *         allwinner,function = "spi0";
+	 *         allwinner,drive = <SUN4I_PINCTRL_10_MA>;
+	 *         allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
+	 *     };
+	 *
+	 * Test:
+	 * fdt print /soc@01c00000/pinctrl@01c20800/spi0@1
+	 */
+	offset = fdt_path_offset(blob, FDT_PINCTRL_PATH);
+	if (offset < 0) {
+		printf("Path \"%s\" not found: %s (%d)\n", FDT_PINCTRL_PATH, fdt_strerror(offset), offset);
+		return offset;
+	}
+
+	offset = fdt_add_subnode(blob, offset, "spi0@1");
+	if (offset < 0) {
+		printf("Failed to add subnode: %s (%d)\n", fdt_strerror(offset), offset);
+		return offset;
+	}
+
+	phandle = fdt32_to_cpu(fdt_get_max_phandle(blob) + 1);
+
+	ret |= fdt_setprop_u32(blob, offset, "phandle", cpu_to_fdt32(phandle));
+	ret |= fdt_setprop_u32(blob, offset, "allwinner,pull", cpu_to_fdt32(0));
+	ret |= fdt_setprop_u32(blob, offset, "allwinner,drive", cpu_to_fdt32(0));
+	ret |= fdt_setprop_string(blob, offset, "allwinner,function" , "spi0");
+
+	ret |= fdt_setprop_string(blob, offset, "allwinner,pins" , "PC0");
+	ret |= fdt_appendprop_string(blob, offset, "allwinner,pins", "PC1");
+	ret |= fdt_appendprop_string(blob, offset, "allwinner,pins", "PC2");
+	ret |= fdt_appendprop_string(blob, offset, "allwinner,pins", "PC23");
+	if (ret < 0) {
+		printf("Failed to populate spi0@1 subnode: %s (%d)\n", fdt_strerror(ret), ret);
+		return ret;
+	}
+
+	/**
+	 * Find /soc@01c00000/spi@01c05000
+	 *
+	 * Change following properties:
+	 *   - pinctrl-names = "default";
+	 *   - pinctrl-0 = <&spi0@1>;
+	 *   - status = "okay";
+	 *
+	 * Test:
+	 * fdt print /soc@01c00000/spi@01c05000
+	 */
 	offset = fdt_path_offset(blob, FDT_SPI_PATH);
 	if (offset < 0) {
 		printf("Path \"%s\" not found: %s (%d)\n", FDT_SPI_PATH, fdt_strerror(offset), offset);
@@ -177,20 +233,49 @@ static int board_fix_spi_flash(void *blob)
 	}
 
 	/* Change status to okay */
-	ret = fdt_setprop_string(blob, offset, "status" , "okay");
+	ret |= fdt_setprop_string(blob, offset, "status" , "okay");
+	ret |= fdt_setprop_u32(blob, offset, "pinctrl-0", cpu_to_fdt32(phandle));
+	ret |= fdt_setprop_string(blob, offset, "pinctrl-names", "default");
 	if (ret < 0) {
-		printf("Failed to change \"status\" to \"okay\": %s (%d)\n", fdt_strerror(ret), ret);
-		return 0;
+		printf("Failed to update properties for spi0@0 node: %s (%d)\n", fdt_strerror(ret), ret);
+		return ret;
 	}
 
+	/**
+	 * Add the following node:
+	 * spi-nor@0 {
+	 *     #address-cells = <1>;
+	 *     #size-cells = <1>;
+	 *     compatible = "winbond,w25q128", "jedec,spi-nor", "spi-flash";
+	 *     reg = <0>;
+	 *     spi-max-frequency = <20000000>;
+	 *     status = "okay";
+	 * }
+	 */
 	offset = fdt_add_subnode(blob, offset, "spi-nor@0");
 	if (offset < 0) {
 		printf("Failed to add subnode: %s (%d)\n", fdt_strerror(offset), offset);
 		return offset;
 	}
 
+	ret |= fdt_setprop_string(blob, offset, "status" , "okay");
+	ret |= fdt_setprop_u32(blob, offset, "spi-max-frequency", cpu_to_fdt32(20000000));
+	ret |= fdt_setprop_u32(blob, offset, "#reg", cpu_to_fdt32(0));
+	ret |= fdt_setprop_u32(blob, offset, "#size-cells", cpu_to_fdt32(1));
+	ret |= fdt_setprop_u32(blob, offset, "#address-cells", cpu_to_fdt32(1));
+	ret |= fdt_setprop_string(blob, offset, "compatible", "winbond,w25q128");
+	ret |= fdt_appendprop_string(blob, offset, "compatible", "jedec,spi-nor");
+	ret |= fdt_appendprop_string(blob, offset, "compatible", "spi-flash");
+	if (ret < 0) {
+		printf("Failed to populate spi-nor@0 subnode: %s (%d)\n", fdt_strerror(ret), ret);
+		return ret;
+	}
+
 	/*
 	 * Add alias property
+	 *
+	 * fdt print /aliases
+	 *     spi0 = "/soc@01c00000/spi@01c05000"
 	 */
 	offset = fdt_path_offset(blob, FDT_ALIASES);
 	if (offset < 0) {
@@ -206,31 +291,31 @@ static int board_fix_spi_flash(void *blob)
 
 	return 0;
 }
-#endif
+
 int board_fix_fdt(void *blob)
 {
 	int ret;
 
 	debug("Address of FDT blob: %p\n", (uint32_t *)blob);
 
-	ret = fdt_increase_size(blob, 256);
+	ret = fdt_increase_size(blob, 512);
 	if (ret < 0) {
 		printf("Failed to increase size: %s (%d)\n", fdt_strerror(ret), ret);
 		return ret;
 	}
 
-	#if 0
 
+#if 0
 	if ((ret = board_fix_gmac(blob)) < 0)
 		return ret;
 
 	if ((ret = board_fix_emac(blob)) < 0)
 		return ret;
-
+#endif
 	if ((ret = board_fix_spi_flash(blob)) < 0)
 		return ret;
 
-	#endif
+
 
 
 	return 0;
