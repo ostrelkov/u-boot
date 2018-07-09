@@ -7,64 +7,58 @@
 #include <common.h>
 #include "boards.h"
 
-#ifndef CONFIG_SPLBUILD
-struct olinuxino_boards {
-	uint32_t id;
-	const char name[32];
-	const char fdt[32];
-};
-
-static struct olinuxino_boards olinuxino_boards[] = {
+#ifndef CONFIG_SPL_BUILD
+struct olinuxino_boards olinuxino_boards[] = {
 	/* A20-OLinuXino-Lime */
-	OLINUXINO_BOARD(7739, "A20-OLinuXino-LIME", "sun7i-a20-olinuxino-lime"),
-	OLINUXINO_BOARD(7743, "A20-OLinuXino-LIME-n4GB", "sun7i-a20-olinuxino-lime"),
-	OLINUXINO_BOARD(8934, "A20-OLinuXino-LIME-n8GB", "sun7i-a20-olinuxino-lime"),
+	OLINUXINO_BOARD(7739, "A20-OLinuXino-LIME", "sun7i-a20-olinuxino-lime.dtb"),
+	OLINUXINO_BOARD(7743, "A20-OLinuXino-LIME-n4GB", "sun7i-a20-olinuxino-lime.dtb"),
+	OLINUXINO_BOARD(8934, "A20-OLinuXino-LIME-n8GB", "sun7i-a20-olinuxino-lime.dtb"),
 
 	/* T2-OLinuXino-Lime */
-	OLINUXINO_BOARD(9211, "T2-OLinuXino-LIME-IND", "sun7i-a20-olinuxino-lime"),
-	OLINUXINO_BOARD(9215, "T2-OLinuXino-LIME-s16MB-IND", "sun7i-a20-olinuxino-lime"),
-	OLINUXINO_BOARD(9219, "T2-OLinuXino-LIME-e4GB-IND", "sun7i-a20-olinuxino-lime-emmc"),
+	OLINUXINO_BOARD(9211, "T2-OLinuXino-LIME-IND", "sun7i-a20-olinuxino-lime.dtb"),
+	OLINUXINO_BOARD(9215, "T2-OLinuXino-LIME-s16MB-IND", "sun7i-a20-olinuxino-lime.dtb"),
+	OLINUXINO_BOARD(9219, "T2-OLinuXino-LIME-e4GB-IND", "sun7i-a20-olinuxino-lime-emmc.dtb"),
 
 	/* A20-OLinuXino-Lime2 */
-	OLINUXINO_BOARD(7701, "A20-OLinuXino-LIME2", "sun7i-a20-olinuxino-lime2"),
-	OLINUXINO_BOARD(8340, "A20-OLinuXino-LIME2-e4GB", "sun7i-a20-olinuxino-lime2-emmc"),
-	OLINUXINO_BOARD(7624, "A20-OLinuXino-LIME2-n4GB", "sun7i-a20-olinuxino-lime2"),
-	OLINUXINO_BOARD(8910, "A20-OLinuXino-LIME2-n8GB", "sun7i-a20-olinuxino-lime2"),
-	OLINUXINO_BOARD(8946, "A20-OLinuXino-LIME2-s16MB", "sun7i-a20-olinuxino-lime2"),
+	OLINUXINO_BOARD(7701, "A20-OLinuXino-LIME2", "sun7i-a20-olinuxino-lime2.dtb"),
+	OLINUXINO_BOARD(8340, "A20-OLinuXino-LIME2-e4GB", "sun7i-a20-olinuxino-lime2-emmc.dtb"),
+	OLINUXINO_BOARD(7624, "A20-OLinuXino-LIME2-n4GB", "sun7i-a20-olinuxino-lime2.dtb"),
+	OLINUXINO_BOARD(8910, "A20-OLinuXino-LIME2-n8GB", "sun7i-a20-olinuxino-lime2.dtb"),
+	OLINUXINO_BOARD(8946, "A20-OLinuXino-LIME2-s16MB", "sun7i-a20-olinuxino-lime2.dtb"),
 
 	/* T2-OLinuXino-Lime2 */
-	OLINUXINO_BOARD(9239 , "T2-OLinuXino-LIME2-IND", "sun7i-a20-olinuxino-lime2"),
-	OLINUXINO_BOARD(9247 , "T2-OLinuXino-LIME2-s16MB-IND", "sun7i-a20-olinuxino-lime2"),
-	OLINUXINO_BOARD(9243 , "T2-OLinuXino-LIME2-e4GB-IND", "sun7i-a20-olinuxino-lime2-emmc"),
+	OLINUXINO_BOARD(9239 , "T2-OLinuXino-LIME2-IND", "sun7i-a20-olinuxino-lime2.dtb"),
+	OLINUXINO_BOARD(9247 , "T2-OLinuXino-LIME2-s16MB-IND", "sun7i-a20-olinuxino-lime2.dtb"),
+	OLINUXINO_BOARD(9243 , "T2-OLinuXino-LIME2-e4GB-IND", "sun7i-a20-olinuxino-lime2-emmc.dtb"),
 
 	/* A20-OLinuXino-MICRO */
-	OLINUXINO_BOARD(4614, "A20-OLinuXino-MICRO", "sun7i-a20-olinuxino-micro"),
-	OLINUXINO_BOARD(8832, "A20-OLinuXino-MICRO-e4GB", "sun7i-a20-olinuxino-micro-emmc"),
-	OLINUXINO_BOARD(9042, "A20-OLinuXino-MICRO-e16GB", "sun7i-a20-olinuxino-micro-emmc"),
-	OLINUXINO_BOARD(8661, "A20-OLinuXino-MICRO-e4GB-IND", "sun7i-a20-olinuxino-micro-emmc"),
-	OLINUXINO_BOARD(8828, "A20-OLinuXino-MICRO-IND", "sun7i-a20-olinuxino-micro"),
-	OLINUXINO_BOARD(4615, "A20-OLinuXino-MICRO-n4GB", "sun7i-a20-olinuxino-micro"),
-	OLINUXINO_BOARD(8918, "A20-OLinuXino-MICRO-n8GB", "sun7i-a20-olinuxino-micro"),
+	OLINUXINO_BOARD(4614, "A20-OLinuXino-MICRO", "sun7i-a20-olinuxino-micro.dtb"),
+	OLINUXINO_BOARD(8832, "A20-OLinuXino-MICRO-e4GB", "sun7i-a20-olinuxino-micro-emmc.dtb"),
+	OLINUXINO_BOARD(9042, "A20-OLinuXino-MICRO-e16GB", "sun7i-a20-olinuxino-micro-emmc.dtb"),
+	OLINUXINO_BOARD(8661, "A20-OLinuXino-MICRO-e4GB-IND", "sun7i-a20-olinuxino-micro-emmc.dtb"),
+	OLINUXINO_BOARD(8828, "A20-OLinuXino-MICRO-IND", "sun7i-a20-olinuxino-micro.dtb"),
+	OLINUXINO_BOARD(4615, "A20-OLinuXino-MICRO-n4GB", "sun7i-a20-olinuxino-micro.dtb"),
+	OLINUXINO_BOARD(8918, "A20-OLinuXino-MICRO-n8GB", "sun7i-a20-olinuxino-micro.dtb"),
 
 	/* T2-OLinuXino-MICRO */
-	OLINUXINO_BOARD(9223, "T2-OLinuXino-MICRO-IND", "sun7i-a20-olinuxino-micro"),
-	OLINUXINO_BOARD(9235, "T2-OLinuXino-MICRO-s16MB-IND", "sun7i-a20-olinuxino-micro"),
-	OLINUXINO_BOARD(9227, "T2-OLinuXino-MICRO-e4GB-IND", "sun7i-a20-olinuxino-micro-emmc"),
+	OLINUXINO_BOARD(9223, "T2-OLinuXino-MICRO-IND", "sun7i-a20-olinuxino-micro.dtb"),
+	OLINUXINO_BOARD(9235, "T2-OLinuXino-MICRO-s16MB-IND", "sun7i-a20-olinuxino-micro.dtb"),
+	OLINUXINO_BOARD(9227, "T2-OLinuXino-MICRO-e4GB-IND", "sun7i-a20-olinuxino-micro-emmc.dtb"),
 
 	/* A20-SOM */
-	OLINUXINO_BOARD(4673, "A20-SOM-n4GB", "sun7i-a20-olimex-som-evb"),
-	OLINUXINO_BOARD(7664, "A20-SOM", "sun7i-a20-olimex-som-evb"),
-	OLINUXINO_BOARD(8849, "A20-SOM-IND", "sun7i-a20-olimex-som-evb"),
-	OLINUXINO_BOARD(8922, "A20-SOM-n8GB", "sun7i-a20-olimex-som-evb"),
-	OLINUXINO_BOARD(9155, "A20-SOM-e16GB", "sun7i-a20-olimex-som-evb-emmc"),
-	OLINUXINO_BOARD(9148, "A20-SOM-e16GB-IND", "sun7i-a20-olimex-som-evb-emmc"),
+	OLINUXINO_BOARD(4673, "A20-SOM-n4GB", "sun7i-a20-olimex-som-evb.dtb"),
+	OLINUXINO_BOARD(7664, "A20-SOM", "sun7i-a20-olimex-som-evb.dtb"),
+	OLINUXINO_BOARD(8849, "A20-SOM-IND", "sun7i-a20-olimex-som-evb.dtb"),
+	OLINUXINO_BOARD(8922, "A20-SOM-n8GB", "sun7i-a20-olimex-som-evb.dtb"),
+	OLINUXINO_BOARD(9155, "A20-SOM-e16GB", "sun7i-a20-olimex-som-evb-emmc.dtb"),
+	OLINUXINO_BOARD(9148, "A20-SOM-e16GB-IND", "sun7i-a20-olimex-som-evb-emmc.dtb"),
 
 	/* T2-SOM */
-	OLINUXINO_BOARD(9259, "T2-SOM-IND", "sun7i-a20-olimex-som-evb"),
+	OLINUXINO_BOARD(9259, "T2-SOM-IND", "sun7i-a20-olimex-som-evb.dtb"),
 
 	/* A20-SOM204 */
-	OLINUXINO_BOARD(8991, "A20-SOM204", "sun7i-a20-olimex-som204-evb"),
-	OLINUXINO_BOARD(8958, "A20-SOM204-1Gs16Me16G-MC", "sun7i-a20-olimex-som204-evb-emmc"),	//TODO: Add ateecc508a, ir0 ft_system_setup()
+	OLINUXINO_BOARD(8991, "A20-SOM204", "sun7i-a20-olimex-som204-evb.dtb"),
+	OLINUXINO_BOARD(8958, "A20-SOM204-1Gs16Me16G-MC", "sun7i-a20-olimex-som204-evb-emmc.dtb"),
 
 	/* END */
 	{

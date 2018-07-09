@@ -166,6 +166,8 @@ static int board_fix_spi_flash(void *blob)
 	int offset;
 	int ret = 0;
 
+	debug("Updating \"%s\" node\n", FDT_SPI_PATH);
+
 	/**
 	 * Some boards, have both eMMC and SPI flash:
 	 *   - A20-SOM204-1Gs16Me16G-MC (8958)
@@ -260,7 +262,7 @@ static int board_fix_spi_flash(void *blob)
 
 	ret |= fdt_setprop_string(blob, offset, "status" , "okay");
 	ret |= fdt_setprop_u32(blob, offset, "spi-max-frequency", 20000000);
-	ret |= fdt_setprop_u32(blob, offset, "#reg", 0);
+	ret |= fdt_setprop_u32(blob, offset, "reg", 0);
 	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 1);
 	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 1);
 	ret |= fdt_setprop_string(blob, offset, "compatible", "winbond,w25q128");

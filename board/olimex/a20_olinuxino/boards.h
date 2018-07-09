@@ -12,6 +12,19 @@
 
 #define OLINUXINO_BOARD(__id, __name, __fdt) { .id = __id, .name = __name, .fdt = __fdt, }
 
+#ifndef CONFIG_SPL_BUILD
+struct olinuxino_boards {
+	uint32_t id;
+	const char name[32];
+	const char fdt[32];
+};
+
+extern struct olinuxino_boards olinuxino_boards[];
+#endif
+
+
+
+
 const char *olimex_get_board_name(uint32_t id);
 const char *olimex_get_board_fdt(uint32_t id);
 
