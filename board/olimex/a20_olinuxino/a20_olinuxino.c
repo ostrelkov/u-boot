@@ -430,7 +430,9 @@ static void setup_environment(const void *fdt)
 
 		p = eeprom->mac;
 		for (i = 0; i < 6; i++) {
-			sprintf(digit, "%c%c", p[i * 2], p[i * 2 + 1]);
+			sprintf(digit, "%c%c",
+				(p[i * 2] == 0xFF) ? 'F' : p[i * 2],
+				(p[i * 2 + 1] == 0xFF) ? 'F' : p[i * 2 + 1]);
 			mac_addr[i] = simple_strtoul(digit, NULL, 16);
 		}
 
@@ -540,6 +542,7 @@ int show_board_info(void)
 {
 	const char *name;
 	char *mac = eeprom->mac;
+	uint8_t i;
 
 	if (!olimex_eeprom_is_valid()) {
 		printf("Model: Unknown\n");
@@ -556,9 +559,17 @@ int show_board_info(void)
 	       0 : eeprom->revision.minor);
 
 	printf("\nSerial:%08X\n", eeprom->serial);
-	printf("MAC:   %c%c:%c%c:%c%c:%c%c:%c%c:%c%c\n",
-	       mac[0], mac[1], mac[2], mac[3], mac[4], mac[5],
-	       mac[6], mac[7], mac[8], mac[9], mac[10], mac[11]);
+	printf("MAC:   ");
+	for (i = 0; i < 12; i += 2 ) {
+		if (i < 10)
+			printf("%c%c:",
+				(mac[i] == 0xFF) ? 'F' : mac[i],
+				(mac[i+1] == 0xFF) ? 'F' : mac[i+1]);
+		else
+			printf("%c%c\n",
+				(mac[i] == 0xFF) ? 'F' : mac[i],
+				(mac[i+1] == 0xFF) ? 'F' : mac[i+1]);
+	}
 
 	return 0;
 }

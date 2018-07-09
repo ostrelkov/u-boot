@@ -16,6 +16,7 @@ static int do_config_info(cmd_tbl_t *cmdtp, int flag,
 {
 	char *mac = eeprom->mac;
 	const char *name;
+	uint8_t i;
 
 	if (olimex_i2c_eeprom_read()) {
 		printf("Failed to read the current EEPROM configuration!\n");
@@ -37,9 +38,17 @@ static int do_config_info(cmd_tbl_t *cmdtp, int flag,
 	       0 : eeprom->revision.minor);
 
 	printf("\nSerial:%08X\n", eeprom->serial);
-	printf("MAC:   %c%c:%c%c:%c%c:%c%c:%c%c:%c%c\n",
-	       mac[0], mac[1], mac[2], mac[3], mac[4], mac[5],
-	       mac[6], mac[7], mac[8], mac[9], mac[10], mac[11]);
+	printf("MAC:   ");
+	for (i = 0; i < 12; i += 2 ) {
+		if (i < 10)
+			printf("%c%c:",
+				(mac[i] == 0xFF) ? 'F' : mac[i],
+				(mac[i+1] == 0xFF) ? 'F' : mac[i+1]);
+		else
+			printf("%c%c\n",
+				(mac[i] == 0xFF) ? 'F' : mac[i],
+				(mac[i+1] == 0xFF) ? 'F' : mac[i+1]);
+	}
 
 	return CMD_RET_SUCCESS;
 }
@@ -62,6 +71,8 @@ static int do_config_write(cmd_tbl_t *cmdtp, int flag,
 {
 	struct olinuxino_boards *board = olinuxino_boards;
 	struct olimex_eeprom info;
+	uint32_t sid[4];
+	char mac[13];
 	uint32_t id;
 	uint8_t i = 0;
 	char *p;
@@ -69,6 +80,7 @@ static int do_config_write(cmd_tbl_t *cmdtp, int flag,
 	if (argc < 3 || argc > 5)
 		return CMD_RET_USAGE;
 
+	memset(&info, 0xFF, 256);
 
 	id = simple_strtoul(argv[1], NULL, 10);
 	do {
@@ -103,6 +115,7 @@ static int do_config_write(cmd_tbl_t *cmdtp, int flag,
 
 
 	if (argc > 4) {
+		i = 0;
 		p = argv[4];
 		while (*p) {
 			if ((*p < '0' || *p > '9') && (*p < 'a' || *p > 'f') && (*p < 'A' || *p > 'F') && (*p != ':')) {
@@ -118,6 +131,25 @@ static int do_config_write(cmd_tbl_t *cmdtp, int flag,
 		if (i != 12) {
 			printf("Invalid MAC address lenght: %d!\n", i);
 			return CMD_RET_FAILURE;
+		}
+	} else {
+		sunxi_get_sid(sid);
+		if (sid[0] != 0) {
+
+			/* Ensure the NIC specific bytes of the mac are not all 0 */
+			if ((sid[3] & 0xffffff) == 0)
+				sid[3] |= 0x800000;
+
+			/* Non OUI / registered MAC address */
+			snprintf(&mac[0], 3, "%02X", 0x02);
+			snprintf(&mac[2], 3, "%02X", (sid[0] >>  0) & 0xff);
+			snprintf(&mac[4], 3, "%02X", (sid[3] >> 24) & 0xff);
+			snprintf(&mac[6], 3, "%02X", (sid[3] >> 16) & 0xff);
+			snprintf(&mac[8], 3, "%02X", (sid[3] >>  8) & 0xff);
+			snprintf(&mac[10], 3, "%02X", (sid[3] >>  0) & 0xff);
+
+			memcpy(&info.mac, &mac, 12);
+
 		}
 	}
 
