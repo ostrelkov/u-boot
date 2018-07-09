@@ -48,34 +48,4 @@ int olimex_i2c_eeprom_erase(void);
 
 bool olimex_eeprom_is_valid(void);
 
-
-#if 0
-struct olimex_revision *olimex_get_eeprom_revision(void);
-struct olimex_config *olimex_get_eeprom_config(void);
-uint32_t olimex_get_eeprom_serial(void);
-uint32_t olimex_get_eeprom_id(void);
-char *olimex_get_eeprom_mac(void);
-
-
-void olimex_set_eeprom_revision(struct olimex_revision *revision);
-void olimex_set_eeprom_config(struct olimex_config *config);
-void olimex_set_eeprom_serial(uint32_t serial);
-void olimex_set_eeprom_id(uint16_t id);
-void olimex_set_eeprom_mac(char *mac);
-
-
-struct olimex_config *olimex_get_board_config(void);
-struct board_table *olimex_get_board_list(void);
-const char *olimex_get_board_overlays(void);
-#endif
-
-#if 0
-
-#endif
-
-// bool olimex_board_is_micro(void);
-// bool olimex_board_is_lime(void);
-// bool olimex_board_is_lime2(void);
-// bool olimex_board_is_som204(void);
-
 #endif	/* __BOARD_DETECT_H */

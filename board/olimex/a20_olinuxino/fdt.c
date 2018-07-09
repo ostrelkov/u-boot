@@ -166,15 +166,14 @@ static int board_fix_spi_flash(void *blob)
 	int offset;
 	int ret = 0;
 
-	debug("Updating \"%s\" node\n", FDT_SPI_PATH);
-
 	/**
 	 * Some boards, have both eMMC and SPI flash:
 	 *   - A20-SOM204-1Gs16Me16G-MC (8958)
 	 */
-	// if (eeprom->config.storage != 's' && eeprom->id != 8958)
-	// 	return 0;
+	if (eeprom->config.storage != 's' && eeprom->id != 8958)
+		return 0;
 
+	debug("Updating \"%s\" node\n", FDT_SPI_PATH);
 
 	/*
 	 * Find /soc@01c00000/pinctrl@01c20800

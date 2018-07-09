@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: (GPL-2.0+ OR MIT)
  */
 #include <common.h>
+#include <linux/ctype.h>
 
 #include "board_detect.h"
 #include "boards.h"
@@ -13,7 +14,6 @@
 static int do_config_info(cmd_tbl_t *cmdtp, int flag,
 			  int argc, char *const argv[])
 {
-	struct olimex_revision *rev;
 	char *mac = eeprom->mac;
 	const char *name;
 
@@ -44,44 +44,33 @@ static int do_config_info(cmd_tbl_t *cmdtp, int flag,
 	return CMD_RET_SUCCESS;
 }
 
-
 static int do_config_list(cmd_tbl_t *cmdtp, int flag,
 			  int argc, char *const argv[])
 {
-	struct olinuxino_boards *board = olinuxino_boards;
-	#if 0
-	olinuxino_boards
-	struct board_table *board;
+	struct olinuxino_boards *board;
 
 	printf("Supported boards:\n");
 	printf("----------------------------------------\n");
 
-
-	for (board = olimex_get_board_list(); board->id != 0; board++)
+	for (board = olinuxino_boards; board->id != 0; board++)
 		printf("%-30s - %-10d\n", board->name, board->id);
-	#endif
 	return CMD_RET_SUCCESS;
 }
 
 static int do_config_write(cmd_tbl_t *cmdtp, int flag,
 			   int argc, char *const argv[])
 {
-	#if 0
-	struct olimex_revision rev;
-	struct board_table *board;
-	uint32_t serial;
+	struct olinuxino_boards *board = olinuxino_boards;
+	struct olimex_eeprom info;
 	uint32_t id;
 	uint8_t i = 0;
-	char mac[13];
 	char *p;
-
-
 
 	if (argc < 3 || argc > 5)
 		return CMD_RET_USAGE;
 
+
 	id = simple_strtoul(argv[1], NULL, 10);
-	board = olimex_get_board_list();
 	do {
 		if (board->id == id)
 			break;
@@ -94,21 +83,24 @@ static int do_config_write(cmd_tbl_t *cmdtp, int flag,
 		}
 	} while (board->id != 0);
 
-	rev.major = argv[2][0];
-	rev.minor = '\0';
+	info.id = id;
+	memcpy(&info.config, board->config, 4);
+
+	info.revision.major = argv[2][0];
+	info.revision.minor = '\0';
 
 	/* Make uppercase */
-	if (rev.major >= 'a' && rev.major <= 'z')
-		rev.major += 0x20;
+	info.revision.major = toupper(info.revision.major);
 
-	if (rev.major < 'A' || rev.major > 'Z') {
+	if (info.revision.major < 'A' || info.revision.major > 'Z') {
 		printf("%c in not valid revision!\n"
-		       "Revision should be one character: A, C, J, etc...\n", (char)rev.major);
+		       "Revision should be one character: A, C, J, etc...\n", info.revision.major);
 		return CMD_RET_FAILURE;
 	}
 
 	if (argc > 3)
-		serial = simple_strtoul(argv[3], NULL, 16);
+		info.serial = simple_strtoul(argv[3], NULL, 16);
+
 
 	if (argc > 4) {
 		p = argv[4];
@@ -119,11 +111,10 @@ static int do_config_write(cmd_tbl_t *cmdtp, int flag,
 			}
 
 			if (*p != ':')
-				mac[i++] = toupper(*p);
+				info.mac[i++] = toupper(*p);
 			p++;
 		};
 
-		mac[i] = 0;
 		if (i != 12) {
 			printf("Invalid MAC address lenght: %d!\n", i);
 			return CMD_RET_FAILURE;
@@ -135,17 +126,10 @@ static int do_config_write(cmd_tbl_t *cmdtp, int flag,
 		return CMD_RET_FAILURE;
 
 	printf("Writting configuration EEPROM...\n");
-	olimex_set_eeprom_id(id);
-	olimex_set_eeprom_revision(&rev);
-	olimex_set_eeprom_config(&board->config);
-	if (argc > 3)
-		olimex_set_eeprom_serial(serial);
-	if (argc > 4)
-		olimex_set_eeprom_mac(mac);
+	memcpy(eeprom, &info, 256);
 
 	olimex_i2c_eeprom_write();
 	olimex_i2c_eeprom_read();
-	#endif
 	return CMD_RET_SUCCESS;
 }
 
@@ -153,8 +137,7 @@ static int do_config_erase(cmd_tbl_t *cmdtp, int flag,
 			   int argc, char *const argv[])
 {
 	printf("Erasing configuration EEPROM...\n");
-	// return olimex_i2c_eeprom_erase();
-	return CMD_RET_SUCCESS;
+	return olimex_i2c_eeprom_erase();
 }
 
 static cmd_tbl_t cmd_config[] = {
@@ -184,10 +167,6 @@ static int do_config_opts(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv
 static cmd_tbl_t cmd_olinuxino[] = {
 	U_BOOT_CMD_MKENT(config, CONFIG_SYS_MAXARGS, 0, do_config_opts, "", ""),
 };
-
-
-
-
 
 static int do_olinuxino_ops(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
