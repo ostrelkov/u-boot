@@ -10,6 +10,7 @@
 #define DEBUG
 #include <common.h>
 #include <linux/libfdt.h>
+#include <linux/sizes.h>
 #include <fdt_support.h>
 
 #include "board_detect.h"
@@ -20,6 +21,28 @@
 #define FDT_GMAC_PATH		"/soc@01c00000/ethernet@01c50000"
 #define FDT_PINCTRL_PATH	"/soc@01c00000/pinctrl@01c20800"
 #define FDT_SPI_PATH		"/soc@01c00000/spi@01c05000"
+
+#define NAND_PART(__label, __start, __lenght) \
+	{ \
+		.label = __label, \
+		.addr = __start, \
+		.lenght = __lenght \
+	}
+
+struct __nand_partitions {
+	char label[32];
+	uint32_t addr;
+	uint32_t lenght;
+
+} nand_partitions[] = {
+	NAND_PART("NAND.SPL",			0x00000000,	SZ_4M),
+	NAND_PART("NAND.SPL.backup",		0x00400000,	SZ_4M),
+	NAND_PART("NAND.u-boot",		0x00800000,	SZ_4M),
+	NAND_PART("NAND.u-boot.backup",		0x00C00000,	SZ_4M),
+	NAND_PART("NAND.u-boot-env",		0x01000000,	SZ_4M),
+	NAND_PART("NAND.u-boot-env.backup",	0x01400000,	SZ_4M),
+	NAND_PART("NAND.rootfs",		0x01800000,	0xFE800000),
+};
 
 static int board_fix_spi_flash(void *blob)
 {
@@ -154,9 +177,12 @@ static int board_fix_spi_flash(void *blob)
 
 static int board_fix_nand(void *blob)
 {
+	char partition_name[64];
+	int offset, parent;
 	uint32_t phandle;
-	int offset;
 	int ret = 0;
+	uint8_t i;
+
 	/* Modify only boards with nand storage */
 	// if (eeprom->config.storage != 'n')
 	// 	return 0;
@@ -251,7 +277,46 @@ static int board_fix_nand(void *blob)
 	 *     allwinner,rb = <0>;
 	 *     nand-ecc-mode = "hw";
 	 *     nand-on-flash-bbt;
-	 * }
+	 *     partitions {
+	 *         compatible = "fixed-partitions";
+	 *         #address-cells = <2>;
+	 *         #size-cells = <2>;
+	 *
+	 *         partition@0 {
+	 *             label = "NAND.SPL";
+	 *             reg = <0x0 0x0 0x0 0x400000>;
+	 *         };
+	 *
+	 *         partition@400000 {
+	 *             label = "SPL.backup";
+	 *             reg = <0x0 0x400000 0x0 0x400000>;
+	 *         };
+	 *
+	 *         partition@800000 {
+	 *             label = "NAND.u-boot";
+	 *             reg = <0x0 0x800000 0x0 0x400000>;
+	 *         };
+	 *
+	 *         partition@c00000 {
+	 *             label = "NAND.u-boot.backup";
+	 *             reg = <0x0 0xc00000 0x0 0x400000>;
+	 *         };
+	 *
+	 *         partition@1000000 {
+	 *             label = "NAND.u-boot-env";
+	 *             reg = <0x0 0x1000000 0x0 0x400000>;
+	 *         };
+	 *
+	 *         partition@1400000 {
+	 *             label = "NAND.u-boot-env.backup";
+	 *             reg = <0x0 0x1400000 0x0 0x400000>;
+	 *         };
+	 *
+	 *         partition@1800000 {
+	 *             label = "NAND.rootfs";
+	 *             reg = <0x0 0x1800000 0x0 0xfe800000>;
+	 *         };
+	 *    }
 	 */
 	offset = fdt_add_subnode(blob, offset, "nand@0");
 	if (offset < 0) {
@@ -268,67 +333,83 @@ static int board_fix_nand(void *blob)
 		return ret;
 	}
 
+	offset = fdt_add_subnode(blob, offset, "partitions");
+	if (offset < 0) {
+		printf("Failed to add partitions subnode: %s (%d)\n", fdt_strerror(offset), offset);
+		return offset;
+	}
+	ret |= fdt_setprop_string(blob, offset, "compatible" , "fixed-partitions");
+	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 2);
+	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 2);
+	if (ret < 0) {
+		printf("Failed to update properties for partitions node: %s (%d)\n", fdt_strerror(ret), ret);
+		return ret;
+	}
+
+	parent = offset;
+
+	/* Add partitions */
+	for (i = 0; i < ARRAY_SIZE(nand_partitions); i++) {
+
+		sprintf(partition_name, "partition@%x", nand_partitions[i].addr);
+		offset = fdt_add_subnode(blob, parent, partition_name);
+		if (offset < 0) {
+			printf("Failed to add %s: %s (%d)\n", partition_name, fdt_strerror(offset), offset);
+			return offset;
+		}
+
+		fdt64_t tmp[2];
+		tmp[0] = cpu_to_fdt64(nand_partitions[i].addr);
+		tmp[1] = cpu_to_fdt64(nand_partitions[i].lenght);
+
+		ret |= fdt_setprop_string(blob, offset, "label" , nand_partitions[i].label);
+		ret |= fdt_setprop(blob, offset, "reg", tmp, sizeof(tmp));
+	}
+
+
+
 	return 0;
 }
 
-#if defined(CONFIG_OF_BOARD_FIXUP)
-static int (*uboot_fix[]) (void *blob) = {
+static int (*olinuxino_fixes[]) (void *blob) = {
 	board_fix_spi_flash,
 	board_fix_nand
 };
 
-int board_fix_fdt(void *blob)
+int olinuxino_fdt_fixup(void *blob)
 {
 	uint8_t i;
 	int ret;
 
 	debug("Address of FDT blob: %p\n", (uint32_t *)blob);
 
-	ret = fdt_increase_size(blob, 512);
+	ret = fdt_increase_size(blob, 65535);
 	if (ret < 0) {
 		printf("Failed to increase size: %s (%d)\n", fdt_strerror(ret), ret);
 		return ret;
 	}
 
 	/* Apply fixes */
-	for (i = 0; i < ARRAY_SIZE(uboot_fix); i++) {
-		debug("%d: %p\n", i, uboot_fix[i]);
-		ret = uboot_fix[i](blob);
+	for (i = 0; i < ARRAY_SIZE(olinuxino_fixes); i++) {
+		debug("%d: %p\n", i, olinuxino_fixes[i]);
+		ret = olinuxino_fixes[i](blob);
 		if (ret < 0)
 			return ret;
 	}
 
 	return ret;
 }
+
+#if defined(CONFIG_OF_BOARD_FIXUP)
+int board_fix_fdt(void *blob)
+{
+	return olinuxino_fdt_fixup(blob);
+}
 #endif
 
 #if defined(CONFIG_OF_SYSTEM_SETUP)
-static int (*kernel_fix[]) (void *blob) = {
-	board_fix_spi_flash,
-	board_fix_nand,
-};
-
 int ft_system_setup(void *blob, bd_t *bd)
 {
-	uint8_t i;
-	int ret;
-
-	debug("Address of FDT blob: %p\n", (uint32_t *)blob);
-
-	ret = fdt_increase_size(blob, 512);
-	if (ret < 0) {
-		printf("Failed to increase size: %s (%d)\n", fdt_strerror(ret), ret);
-		return ret;
-	}
-
-	/* Apply fixes */
-	for (i = 0; i < ARRAY_SIZE(kernel_fix); i++) {
-		debug("%d: %p\n", i, kernel_fix[i]);
-		ret = kernel_fix[i](blob);
-		if (ret < 0)
-			return ret;
-	}
-
-	return ret;
+	return olinuxino_fdt_fixup(blob);
 }
 #endif
