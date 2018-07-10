@@ -10,8 +10,8 @@ obj-y	+= board_detect.o
 ifndef CONFIG_SPL_BUILD
 obj-y	+= boards.o
 obj-y	+= cmd_olinuxino.o
+obj-$(CONFIG_OF_LIBFDT)		+= fdt.o
 endif
 
-obj-$(CONFIG_OF_LIBFDT)		+= fdt.o
 obj-$(CONFIG_SUNXI_AHCI)	+= ../../sunxi/ahci.o
 obj-$(CONFIG_MACH_SUN7I)	+= ../../sunxi/dram_sun5i_auto.o

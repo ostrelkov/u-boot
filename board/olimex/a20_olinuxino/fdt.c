@@ -15,7 +15,7 @@
 #include "board_detect.h"
 
 #define FDT_ALIASES		"/aliases"
-#define FDT_NAND_PATH		"/soc@01c00000/nand@1c03000"
+#define FDT_NAND_PATH		"/soc@01c00000/nand@01c03000"
 #define FDT_EMAC_PATH		"/soc@01c00000/ethernet@01c0b000"
 #define FDT_GMAC_PATH		"/soc@01c00000/ethernet@01c50000"
 #define FDT_PINCTRL_PATH	"/soc@01c00000/pinctrl@01c20800"
@@ -215,7 +215,7 @@ static int board_fix_nand(void *blob)
  	}
 
 	/**
-	 * Find /soc@01c00000/nand@1c03000
+	 * Find /soc@01c00000/nand@01c03000
 	 *
 	 * Change following properties:
 	 *   - pinctrl-names = "default";
@@ -225,7 +225,7 @@ static int board_fix_nand(void *blob)
 	 *   - status = "okay";
 	 *
 	 * Test:
-	 * fdt print /soc@01c00000/nand@1c03000
+	 * fdt print /soc@01c00000/nand@01c03000
 	 */
 	offset = fdt_path_offset(blob, FDT_NAND_PATH);
 	if (offset < 0) {
@@ -274,6 +274,7 @@ static int board_fix_nand(void *blob)
 #if defined(CONFIG_OF_BOARD_FIXUP)
 static int (*uboot_fix[]) (void *blob) = {
 	board_fix_spi_flash,
+	board_fix_nand
 };
 
 int board_fix_fdt(void *blob)

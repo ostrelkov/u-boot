@@ -18,12 +18,12 @@ static int olimex_i2c_eeprom_init(void)
 	int ret;
 
 	if ((ret = i2c_set_bus_num(OLIMEX_EEPROM_BUS))) {
-		printf("%s(): Failed to set bus!\n", __func__);
+		debug("%s(): Failed to set bus!\n", __func__);
 		return ret;
 	}
 
 	if ((ret = i2c_probe(OLIMEX_EEPROM_ADDRESS))) {
-		printf("%s(): Failed to probe!\n", __func__);
+		debug("%s(): Failed to probe!\n", __func__);
 		return ret;
 	}
 
@@ -46,20 +46,14 @@ int olimex_i2c_eeprom_read(void)
 	}
 
 	if (eeprom->header != OLIMEX_EEPROM_MAGIC_HEADER) {
-		printf("Error: EEPROM magic header is not valid!\n"
-		"Expected:   %08x\n"
-		"Got:        %08x\n",
-		OLIMEX_EEPROM_MAGIC_HEADER, eeprom->header);
+		printf("Error: EEPROM magic header is not valid!\n");
 		memset(eeprom, 0xFF, 256);
 		return 1;
 	}
 
 	crc = crc32(0L, (uint8_t *)eeprom, 252);
 	if (eeprom->crc != crc) {
-		printf("Error: CRC checksum is not valid!\n"
-		"Expected:   %08x\n"
-		"Got:        %08x\n",
-		crc, eeprom->crc);
+		printf("Error: CRC checksum is not valid!\n");
 		memset(eeprom, 0xFF, 256);
 		return 1;
 	}

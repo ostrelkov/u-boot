@@ -14,6 +14,7 @@
 #include <phy-sun4i-usb.h>
 #include <netdev.h>
 #include <miiphy.h>
+#include <nand.h>
 #include <crc.h>
 #include <mmc.h>
 #include <spl.h>
@@ -219,7 +220,41 @@ int dram_init(void)
 	return 0;
 }
 
-#ifdef CONFIG_SPL_BUILD
+#ifdef CONFIG_NAND_SUNXI
+static void nand_pinmux_setup(void)
+{
+	unsigned int pin;
+
+	for (pin = SUNXI_GPC(0); pin <= SUNXI_GPC(2); pin++)
+		sunxi_gpio_set_cfgpin(pin, SUNXI_GPC_NAND);
+	for (pin = SUNXI_GPC(4); pin <= SUNXI_GPC(6); pin++)
+		sunxi_gpio_set_cfgpin(pin, SUNXI_GPC_NAND);
+	for (pin = SUNXI_GPC(4); pin <= SUNXI_GPC(6); pin++)
+		sunxi_gpio_set_cfgpin(pin, SUNXI_GPC_NAND);
+	for (pin = SUNXI_GPC(8); pin <= SUNXI_GPC(15); pin++)
+		sunxi_gpio_set_cfgpin(pin, SUNXI_GPC_NAND);
+}
+
+static void nand_clock_setup(void)
+{
+	struct sunxi_ccm_reg *const ccm =
+		(struct sunxi_ccm_reg *)SUNXI_CCM_BASE;
+
+	setbits_le32(&ccm->ahb_gate0, (CLK_GATE_OPEN << AHB_GATE_OFFSET_NAND0));
+	setbits_le32(&ccm->nand0_clk_cfg, CCM_NAND_CTRL_ENABLE | AHB_DIV_1);
+}
+
+void board_nand_init(void)
+{
+	nand_pinmux_setup();
+	nand_clock_setup();
+#ifndef CONFIG_SPL_BUILD
+	sunxi_nand_init();
+#endif
+}
+#endif
+
+#ifdef CONFIG_MMC
 static void mmc_pinmux_setup(int sdc)
 {
 	unsigned int pin;
@@ -273,6 +308,7 @@ int board_mmc_init(bd_t *bis)
 
 	return 0;
 }
+#endif
 
 void sunxi_board_init(void)
 {
@@ -310,7 +346,8 @@ void sunxi_board_init(void)
 	else
 		printf("EEPROM: Corrupted!\n");
 }
-#endif
+
+#ifndef CONFIG_SPL_BUILD
 
 #ifdef CONFIG_USB_GADGET
 int g_dnl_board_usb_cable_connected(void)
@@ -399,7 +436,6 @@ static void parse_spl_header(const uint32_t spl_addr)
 	/* otherwise assume .scr format (mkimage-type script) */
 	env_set_hex("fel_scriptaddr", spl->fel_script_address);
 }
-
 /*
  * Note this function gets called multiple times.
  * It must not make any changes to env variables which already exist.
@@ -538,6 +574,7 @@ int ft_board_setup(void *blob, bd_t *bd)
 	return 0;
 }
 
+
 int show_board_info(void)
 {
 	const char *name;
@@ -574,6 +611,7 @@ int show_board_info(void)
 	return 0;
 }
 
+
 #if defined(CONFIG_MULTI_DTB_FIT)
 int board_fit_config_name_match(const char *name)
 {
@@ -584,8 +622,6 @@ int board_fit_config_name_match(const char *name)
 }
 #endif
 
-
-#ifndef CONFIG_SPL_BUILD
 int mmc_get_env_dev(void)
 {
 	unsigned long bootdev = 0;

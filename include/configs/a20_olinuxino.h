@@ -194,6 +194,36 @@
 #define CONFIG_SYS_USB_OHCI_MAX_ROOT_PORTS 1
 #endif
 
+#ifdef CONFIG_NAND_SUNXI
+#define CONFIG_SYS_NAND_ONFI_DETECTION
+#define CONFIG_SYS_MAX_NAND_DEVICE 1
+#define CONFIG_MTD_PARTITIONS
+#define CONFIG_MTD_DEVICE
+
+#define	BOOTENV_DEV_NAND(devtypeu, devtypel, instance)			\
+	"update_nand="							\
+		"nand erase.part clean NAND.SPL;"			\
+		"nand erase.part clean NAND.SPL.backup;"		\
+		"nand erase.part clean NAND.u-boot;"			\
+		"nand erase.part clean NAND.u-boot.backup;"			\
+		"nand write.raw.noverify 0x50000000 NAND.SPL 40;"	\
+		"nand write.raw.noverify 0x50000000 NAND.SPL.backup 40;"\
+		"nand write 0x60000000 NAND.u-boot 0x200000;"		\
+		"nand write 0x60000000 NAND.u-boot.backup 0x200000;"	\
+		"nand read 0x70000000 NAND.u-boot 0x200000;"		\
+		"md.l 0x60000000 10; md.l 0x70000000 10;\0"
+
+
+#define BOOTENV_DEV_NAME_NAND(devtypeu, devtypel, instance) \
+		"nand "
+
+#define BOOT_TARGET_DEVICES_NAND(func) func(NAND, nand, 0)
+#else
+#define BOOT_TARGET_DEVICES_NAND(func)
+
+#endif
+
+
 #ifdef CONFIG_USB_KEYBOARD
 #define CONFIG_PREBOOT
 #endif
@@ -267,6 +297,7 @@
 #define BOOT_TARGET_DEVICES(func) \
 	func(FEL, fel, na) \
 	BOOT_TARGET_DEVICES_MMC(func) \
+	BOOT_TARGET_DEVICES_NAND(func) \
 	BOOT_TARGET_DEVICES_SCSI(func) \
 	BOOT_TARGET_DEVICES_USB(func) \
 	func(DHCP, dhcp, na)
