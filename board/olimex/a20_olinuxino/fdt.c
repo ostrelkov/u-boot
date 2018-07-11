@@ -51,13 +51,13 @@ struct __nand_partition {
 	uint32_t lenght;
 
 } nand_partitions[] = {
-	NAND_PART("NAND.SPL",			0x00000000,	SZ_4M),
-	NAND_PART("NAND.SPL.backup",		0x00400000,	SZ_4M),
-	NAND_PART("NAND.u-boot",		0x00800000,	SZ_4M),
-	NAND_PART("NAND.u-boot.backup",		0x00C00000,	SZ_4M),
-	NAND_PART("NAND.u-boot-env",		0x01000000,	SZ_4M),
-	NAND_PART("NAND.u-boot-env.backup",	0x01400000,	SZ_4M),
 	NAND_PART("NAND.rootfs",		0x01800000,	0xFE800000),
+	NAND_PART("NAND.u-boot-env.backup",	0x01400000,	SZ_4M),
+	NAND_PART("NAND.u-boot-env",		0x01000000,	SZ_4M),
+	NAND_PART("NAND.u-boot.backup",		0x00C00000,	SZ_4M),
+	NAND_PART("NAND.u-boot",		0x00800000,	SZ_4M),
+	NAND_PART("NAND.SPL.backup",		0x00400000,	SZ_4M),
+	NAND_PART("NAND.SPL",			0x00000000,	SZ_4M),
 };
 
 static int get_path_offset(void *blob, enum devices dev)
