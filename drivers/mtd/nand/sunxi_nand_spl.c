@@ -477,7 +477,6 @@ static int nand_read_buffer(struct nfc_config *conf, uint32_t offs,
 
 	size = ALIGN(size, conf->page_size);
 	page = offs / conf->page_size;
-	printf("%d = %x / %d\n", page, offs, conf->page_size);
 	if (conf->randomize)
 		first_seed = page % conf->nseeds;
 
@@ -528,21 +527,10 @@ int nand_spl_load_image(uint32_t offs, unsigned int size, void *dest)
 	int ret;
 
 	ret = nand_detect_config(&conf, offs, dest);
-	if (ret) {
-		printf("Failed to detect config: %d\n", ret);
+	if (ret)
 		return ret;
-	}
-	printf("page_size: %d\n", conf.page_size);
-	printf("ecc_strength: %d\n", ecc_bytes[conf.ecc_strength]);
-	printf("ecc_size: %d\n", conf.ecc_size);
-	printf("addr_cycles: %d\n", conf.addr_cycles);
-	printf("nseeds: %d\n", conf.nseeds);
-	printf("randomize: %d\n", conf.randomize);
-	printf("valid: %d\n", conf.valid);
 
-	ret = nand_read_buffer(&conf, offs, size, dest);
-	printf("nand_read_buffer: %d\n", ret);
-	return ret;
+	return nand_read_buffer(&conf, offs, size, dest);
 }
 
 void nand_deselect(void)

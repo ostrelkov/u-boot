@@ -15,12 +15,28 @@
 
 #include "board_detect.h"
 
-#define FDT_ALIASES		"/aliases"
-#define FDT_NAND_PATH		"/soc@01c00000/nand@01c03000"
-#define FDT_EMAC_PATH		"/soc@01c00000/ethernet@01c0b000"
-#define FDT_GMAC_PATH		"/soc@01c00000/ethernet@01c50000"
-#define FDT_PINCTRL_PATH	"/soc@01c00000/pinctrl@01c20800"
-#define FDT_SPI_PATH		"/soc@01c00000/spi@01c05000"
+#define FDT_PATH_ALIASES	"/aliases"
+
+enum devices {
+	PATH_NAND = 0,
+	PATH_PINCTRL,
+	PATH_SPI
+};
+
+#define FDT_PATH(__name, __addr) \
+{ \
+	.name = __name, \
+	.addr = __addr, \
+}
+
+struct __path {
+	char name[16];
+	uint32_t addr;
+} paths[] = {
+	FDT_PATH("nand",	0x01c03000),
+	FDT_PATH("pinctrl",	0x01c20800),
+	FDT_PATH("spi",		0x01c05000),
+};
 
 #define NAND_PART(__label, __start, __lenght) \
 	{ \
@@ -29,7 +45,7 @@
 		.lenght = __lenght \
 	}
 
-struct __nand_partitions {
+struct __nand_partition {
 	char label[32];
 	uint32_t addr;
 	uint32_t lenght;
@@ -44,11 +60,35 @@ struct __nand_partitions {
 	NAND_PART("NAND.rootfs",		0x01800000,	0xFE800000),
 };
 
+static int get_path_offset(void *blob, enum devices dev)
+{
+	char path[64];
+	int offset;
+
+	sprintf(path, "/soc@1c00000/%s@%x", paths[dev].name, paths[dev].addr);
+	debug("Searching for \"%s\"\n", path);
+
+	offset = fdt_path_offset(blob, path);
+	if (offset >= 0)
+		return offset;
+
+	sprintf(path, "/soc@01c00000/%s@%08x", paths[dev].name, paths[dev].addr);
+	debug("Searching for \"%s\"\n", path);
+
+	offset = fdt_path_offset(blob, path);
+	if (offset >= 0)
+		return offset;
+
+	printf("Path \"%s\" not found: %s (%d)\n", path, fdt_strerror(offset), offset);
+	return offset;
+}
+
 static int board_fix_spi_flash(void *blob)
 {
 	uint32_t phandle;
-	int offset;
+	char path[64];
 	int ret = 0;
+	int offset;
 
 	/**
 	 * Some boards, have both eMMC and SPI flash:
@@ -56,8 +96,6 @@ static int board_fix_spi_flash(void *blob)
 	 */
 	if (eeprom->config.storage != 's' && eeprom->id != 8958)
 		return 0;
-
-	debug("Updating \"%s\" node\n", FDT_SPI_PATH);
 
 	/*
 	 * Find /soc@01c00000/pinctrl@01c20800
@@ -70,11 +108,10 @@ static int board_fix_spi_flash(void *blob)
 	 * Test:
 	 * fdt print /soc@01c00000/pinctrl@01c20800/spi0@1
 	 */
-	offset = fdt_path_offset(blob, FDT_PINCTRL_PATH);
-	if (offset < 0) {
-		printf("Path \"%s\" not found: %s (%d)\n", FDT_PINCTRL_PATH, fdt_strerror(offset), offset);
+
+	offset = get_path_offset(blob, PATH_PINCTRL);
+	if (offset < 0)
 		return offset;
-	}
 
 	offset = fdt_add_subnode(blob, offset, "spi0@1");
 	if (offset < 0) {
@@ -82,11 +119,14 @@ static int board_fix_spi_flash(void *blob)
 		return offset;
 	}
 
-	phandle = fdt_get_max_phandle(blob) + 1;
+	/* Generate phandle */
+	phandle = fdt_create_phandle(blob, offset);
+	if (!phandle) {
+		printf("Failed to generate phandle.");
+		return -1;
+	}
 
-	ret |= fdt_setprop_u32(blob, offset, "phandle", phandle);
 	ret |= fdt_setprop_string(blob, offset, "function" , "spi0");
-
 	ret |= fdt_setprop_string(blob, offset, "pins" , "PC0");
 	ret |= fdt_appendprop_string(blob, offset, "pins", "PC1");
 	ret |= fdt_appendprop_string(blob, offset, "pins", "PC2");
@@ -108,14 +148,13 @@ static int board_fix_spi_flash(void *blob)
 	 * Test:
 	 * fdt print /soc@01c00000/spi@01c05000
 	 */
-	offset = fdt_path_offset(blob, FDT_SPI_PATH);
-	if (offset < 0) {
-		printf("Path \"%s\" not found: %s (%d)\n", FDT_SPI_PATH, fdt_strerror(offset), offset);
-		return offset;
-	}
+	offset = get_path_offset(blob, PATH_SPI);
+ 	if (offset < 0)
+ 		return offset;
+	fdt_get_path(blob, offset, path, sizeof(path));
 
 	/* Change status to okay */
-	ret |= fdt_setprop_string(blob, offset, "status" , "okay");
+	ret |= fdt_set_node_status(blob, offset, FDT_STATUS_OKAY, 0);
 	ret |= fdt_setprop_u32(blob, offset, "spi-max-frequency", 20000000);
 	ret |= fdt_setprop_u32(blob, offset, "pinctrl-0", phandle);
 	ret |= fdt_setprop_string(blob, offset, "pinctrl-names", "default");
@@ -141,7 +180,7 @@ static int board_fix_spi_flash(void *blob)
 		return offset;
 	}
 
-	ret |= fdt_setprop_string(blob, offset, "status" , "okay");
+	ret |= fdt_set_node_status(blob, offset, FDT_STATUS_OKAY, 0);
 	ret |= fdt_setprop_u32(blob, offset, "spi-max-frequency", 20000000);
 	ret |= fdt_setprop_u32(blob, offset, "reg", 0);
 	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 1);
@@ -160,13 +199,13 @@ static int board_fix_spi_flash(void *blob)
 	 * fdt print /aliases
 	 *     spi0 = "/soc@01c00000/spi@01c05000"
 	 */
-	offset = fdt_path_offset(blob, FDT_ALIASES);
+	offset = fdt_path_offset(blob, FDT_PATH_ALIASES);
 	if (offset < 0) {
-		printf("Path \"%s\" not found: %s (%d)\n", FDT_ALIASES, fdt_strerror(offset), offset);
+		printf("Path \"%s\" not found: %s (%d)\n", FDT_PATH_ALIASES, fdt_strerror(offset), offset);
 		return offset;
-	};
+	}
 
-	ret = fdt_setprop_string(blob, offset, "spi0", FDT_SPI_PATH);
+	ret = fdt_setprop_string(blob, offset, "spi0", path);
 	if (ret < 0) {
 		printf("Failed to add \"spi0\" to \"/aliases\": %s (%d)\n", fdt_strerror(ret), ret);
 		return ret;
@@ -184,11 +223,8 @@ static int board_fix_nand(void *blob)
 	uint8_t i;
 
 	/* Modify only boards with nand storage */
-	// if (eeprom->config.storage != 'n')
-	// 	return 0;
-
-	debug("Updating \"%s\" node\n", FDT_NAND_PATH);
-
+	if (eeprom->config.storage != 'n')
+		return 0;
 
 	/*
 	 * Find /soc@01c00000/pinctrl@01c20800
@@ -203,11 +239,9 @@ static int board_fix_nand(void *blob)
 	 * Test:
 	 * fdt print /soc@01c00000/pinctrl@01c20800/nand0@0
 	 */
-	offset = fdt_path_offset(blob, FDT_PINCTRL_PATH);
- 	if (offset < 0) {
- 		printf("Path \"%s\" not found: %s (%d)\n", FDT_PINCTRL_PATH, fdt_strerror(offset), offset);
- 		return offset;
- 	}
+	 offset = get_path_offset(blob, PATH_PINCTRL);
+	 if (offset < 0)
+		 return offset;
 
  	offset = fdt_add_subnode(blob, offset, "nand0@0");
  	if (offset < 0) {
@@ -215,9 +249,12 @@ static int board_fix_nand(void *blob)
  		return offset;
  	}
 
- 	phandle = fdt_get_max_phandle(blob) + 1;
+	phandle = fdt_create_phandle(blob, offset);
+	if (!phandle) {
+		printf("Failed to generate phandle.");
+		return -1;
+	}
 
- 	ret |= fdt_setprop_u32(blob, offset, "phandle", phandle);
  	ret |= fdt_setprop_string(blob, offset, "function" , "nand0");
 
  	ret |= fdt_setprop_string(blob, offset, "pins" , "PC0");
@@ -253,14 +290,13 @@ static int board_fix_nand(void *blob)
 	 * Test:
 	 * fdt print /soc@01c00000/nand@01c03000
 	 */
-	offset = fdt_path_offset(blob, FDT_NAND_PATH);
-	if (offset < 0) {
-		printf("Path \"%s\" not found: %s (%d)\n", FDT_NAND_PATH, fdt_strerror(offset), offset);
-		return offset;
-	}
+
+	offset = get_path_offset(blob, PATH_NAND);
+ 	if (offset < 0)
+ 		return offset;
 
 	/* Change status to okay */
-	ret |= fdt_setprop_string(blob, offset, "status" , "okay");
+	ret |= fdt_set_node_status(blob, offset, FDT_STATUS_OKAY, 0);
 	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 0);
 	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 1);
 	ret |= fdt_setprop_u32(blob, offset, "pinctrl-0", phandle);
@@ -358,15 +394,13 @@ static int board_fix_nand(void *blob)
 			return offset;
 		}
 
-		fdt64_t tmp[2];
-		tmp[0] = cpu_to_fdt64(nand_partitions[i].addr);
-		tmp[1] = cpu_to_fdt64(nand_partitions[i].lenght);
+		fdt64_t path[2];
+		path[0] = cpu_to_fdt64(nand_partitions[i].addr);
+		path[1] = cpu_to_fdt64(nand_partitions[i].lenght);
 
 		ret |= fdt_setprop_string(blob, offset, "label" , nand_partitions[i].label);
-		ret |= fdt_setprop(blob, offset, "reg", tmp, sizeof(tmp));
+		ret |= fdt_setprop(blob, offset, "reg", path, sizeof(path));
 	}
-
-
 
 	return 0;
 }
