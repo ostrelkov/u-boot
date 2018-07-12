@@ -66,3 +66,5 @@ CONFIG_OF_BOARD_FIXUP=y
 CONFIG_OF_SYSTEM_SETUP=y
 CONFIG_OF_LIST="sun7i-a20-olinuxino-micro sun7i-a20-olinuxino-micro-emmc sun7i-a20-olinuxino-lime sun7i-a20-olinuxino-lime-emmc sun7i-a20-olinuxino-lime2 sun7i-a20-olinuxino-lime2-emmc sun7i-a20-olimex-som-evb sun7i-a20-olimex-som-evb-emmc sun7i-a20-olimex-som204-evb sun7i-a20-olimex-som204-evb-emmc"
 CONFIG_MULTI_DTB_FIT=y
+
+CONFIG_BOARD_EARLY_INIT_R=y

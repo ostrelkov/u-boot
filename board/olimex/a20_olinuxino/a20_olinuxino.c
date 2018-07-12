@@ -246,6 +246,9 @@ static void nand_clock_setup(void)
 
 void board_nand_init(void)
 {
+	if (eeprom->config.storage != 'n')
+		return;
+
 	nand_pinmux_setup();
 	nand_clock_setup();
 #ifndef CONFIG_SPL_BUILD
@@ -277,6 +280,14 @@ static void mmc_pinmux_setup(int sdc)
 		}
 		break;
 
+	case 3:
+		/* SDC3: PI4-PI9 */
+		for (pin = SUNXI_GPI(4); pin <= SUNXI_GPI(9); pin++) {
+			sunxi_gpio_set_cfgpin(pin, SUNXI_GPI_SDC3);
+			sunxi_gpio_set_drv(pin, 2);
+		}
+		break;
+
 	default:
 		break;
 	}
@@ -294,8 +305,6 @@ int board_mmc_init(bd_t *bis)
 		return -1;
 	}
 
-
-
 	/* Initialize MMC2 on boards with eMMC */
 	if (eeprom->config.storage == 'e') {
 		mmc_pinmux_setup(2);
@@ -306,6 +315,23 @@ int board_mmc_init(bd_t *bis)
 		}
 	}
 
+	return 0;
+}
+#endif
+
+#ifdef CONFIG_BOARD_EARLY_INIT_R
+int board_early_init_r(void)
+{
+#ifdef CONFIG_MMC
+	mmc_pinmux_setup(0);
+
+	if (eeprom->config.storage == 'e')
+		mmc_pinmux_setup(2);
+
+	if (olimex_board_is_micro(eeprom->id) ||
+		olimex_board_is_som_evb(eeprom->id))
+		mmc_pinmux_setup(3);
+#endif
 	return 0;
 }
 #endif
@@ -611,14 +637,16 @@ int show_board_info(void)
 	return 0;
 }
 
-
 #if defined(CONFIG_MULTI_DTB_FIT)
 int board_fit_config_name_match(const char *name)
 {
+	const char *dtb;
+
 	if (!olimex_eeprom_is_valid())
 		return -1;
 
-	return (!strncmp(name, olimex_get_board_fdt(eeprom->id), strlen(name))) ? 0 : -1;
+	dtb = olimex_get_board_fdt(eeprom->id);
+	return (!strncmp(name, dtb, strlen(dtb) - 4)) ? 0 : -1;
 }
 #endif
 
