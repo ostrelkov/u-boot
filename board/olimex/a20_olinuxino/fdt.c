@@ -97,6 +97,8 @@ static int board_fix_spi_flash(void *blob)
 	if (eeprom->config.storage != 's' && eeprom->id != 8958)
 		return 0;
 
+	debug("Enabling spi flash...\n");
+
 	/*
 	 * Find /soc@01c00000/pinctrl@01c20800
 	 * Add following properties:
@@ -225,6 +227,8 @@ static int board_fix_nand(void *blob)
 	/* Modify only boards with nand storage */
 	if (eeprom->config.storage != 'n')
 		return 0;
+
+	debug("Enabling NAND...\n");
 
 	/*
 	 * Find /soc@01c00000/pinctrl@01c20800
@@ -425,7 +429,6 @@ int olinuxino_fdt_fixup(void *blob)
 
 	/* Apply fixes */
 	for (i = 0; i < ARRAY_SIZE(olinuxino_fixes); i++) {
-		debug("%d: %p\n", i, olinuxino_fixes[i]);
 		ret = olinuxino_fixes[i](blob);
 		if (ret < 0)
 			return ret;
