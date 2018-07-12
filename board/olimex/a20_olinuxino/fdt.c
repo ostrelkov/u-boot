@@ -17,10 +17,12 @@
 
 #define FDT_PATH_ALIASES	"/aliases"
 
+#define FDT_COMP_PINCTRL	"allwinner,sun7i-a20-pinctrl"
+
 enum devices {
-	PATH_NAND = 0,
-	PATH_PINCTRL,
-	PATH_SPI
+	PATH_I2C2 = 0,
+	PATH_NAND,
+	PATH_SPI0
 };
 
 #define FDT_PATH(__name, __addr) \
@@ -33,8 +35,8 @@ struct __path {
 	char name[16];
 	uint32_t addr;
 } paths[] = {
+	FDT_PATH("i2c",		0x01c2b400),
 	FDT_PATH("nand",	0x01c03000),
-	FDT_PATH("pinctrl",	0x01c20800),
 	FDT_PATH("spi",		0x01c05000),
 };
 
@@ -83,6 +85,42 @@ static int get_path_offset(void *blob, enum devices dev)
 	return offset;
 }
 
+static int board_fix_atecc508a(void *blob)
+{
+	int offset;
+	int ret;
+
+	/**
+	 * Enabled on:
+	 *   - A20-SOM204-1Gs16Me16G-MC (8958)
+	 */
+	if (eeprom->id != 8958)
+		return 0;
+
+	debug("Updating atecc508a@60 node...\n");
+
+	/**
+	 * Add the following node:
+	 * &i2c {
+	 *     atecc508a@60 {
+	 *         compatible = "atmel,atecc508a";
+	 *         reg = <0x60>;
+	 * };
+	 */
+	offset = get_path_offset(blob, PATH_I2C2);
+ 	if (offset < 0)
+ 		return offset;
+
+	offset = fdt_add_subnode(blob, offset, "atecc508a@60");
+	if (offset < 0)
+		return offset;
+
+	ret = fdt_setprop_u32(blob, offset, "reg", 0x60);
+	ret |= fdt_setprop_string(blob, offset, "compatible", "atmel,atecc508a");
+
+	return ret;
+}
+
 static int board_fix_spi_flash(void *blob)
 {
 	uint32_t phandle;
@@ -97,7 +135,7 @@ static int board_fix_spi_flash(void *blob)
 	if (eeprom->config.storage != 's' && eeprom->id != 8958)
 		return 0;
 
-	debug("Enabling spi flash...\n");
+	debug("Updating spi-nor@0 node...\n");
 
 	/*
 	 * Find /soc@01c00000/pinctrl@01c20800
@@ -111,32 +149,26 @@ static int board_fix_spi_flash(void *blob)
 	 * fdt print /soc@01c00000/pinctrl@01c20800/spi0@1
 	 */
 
-	offset = get_path_offset(blob, PATH_PINCTRL);
+	offset = fdt_node_offset_by_compatible(blob, -1, FDT_COMP_PINCTRL);
 	if (offset < 0)
 		return offset;
 
 	offset = fdt_add_subnode(blob, offset, "spi0@1");
-	if (offset < 0) {
-		printf("Failed to add subnode: %s (%d)\n", fdt_strerror(offset), offset);
+	if (offset < 0)
 		return offset;
-	}
 
 	/* Generate phandle */
 	phandle = fdt_create_phandle(blob, offset);
-	if (!phandle) {
-		printf("Failed to generate phandle.");
+	if (!phandle)
 		return -1;
-	}
 
 	ret |= fdt_setprop_string(blob, offset, "function" , "spi0");
 	ret |= fdt_setprop_string(blob, offset, "pins" , "PC0");
 	ret |= fdt_appendprop_string(blob, offset, "pins", "PC1");
 	ret |= fdt_appendprop_string(blob, offset, "pins", "PC2");
 	ret |= fdt_appendprop_string(blob, offset, "pins", "PC23");
-	if (ret < 0) {
-		printf("Failed to populate spi0@1 subnode: %s (%d)\n", fdt_strerror(ret), ret);
+	if (ret < 0)
 		return ret;
-	}
 
 	/**
 	 * Find /soc@01c00000/spi@01c05000
@@ -150,20 +182,17 @@ static int board_fix_spi_flash(void *blob)
 	 * Test:
 	 * fdt print /soc@01c00000/spi@01c05000
 	 */
-	offset = get_path_offset(blob, PATH_SPI);
+	offset = get_path_offset(blob, PATH_SPI0);
  	if (offset < 0)
  		return offset;
-	fdt_get_path(blob, offset, path, sizeof(path));
 
 	/* Change status to okay */
 	ret |= fdt_set_node_status(blob, offset, FDT_STATUS_OKAY, 0);
 	ret |= fdt_setprop_u32(blob, offset, "spi-max-frequency", 20000000);
 	ret |= fdt_setprop_u32(blob, offset, "pinctrl-0", phandle);
 	ret |= fdt_setprop_string(blob, offset, "pinctrl-names", "default");
-	if (ret < 0) {
-		printf("Failed to update properties for spi0@0 node: %s (%d)\n", fdt_strerror(ret), ret);
+	if (ret < 0)
 		return ret;
-	}
 
 	/**
 	 * Add the following node:
@@ -177,10 +206,8 @@ static int board_fix_spi_flash(void *blob)
 	 * }
 	 */
 	offset = fdt_add_subnode(blob, offset, "spi-nor@0");
-	if (offset < 0) {
-		printf("Failed to add subnode: %s (%d)\n", fdt_strerror(offset), offset);
+	if (offset < 0)
 		return offset;
-	}
 
 	ret |= fdt_set_node_status(blob, offset, FDT_STATUS_OKAY, 0);
 	ret |= fdt_setprop_u32(blob, offset, "spi-max-frequency", 20000000);
@@ -190,10 +217,8 @@ static int board_fix_spi_flash(void *blob)
 	ret |= fdt_setprop_string(blob, offset, "compatible", "winbond,w25q128");
 	ret |= fdt_appendprop_string(blob, offset, "compatible", "jedec,spi-nor");
 	ret |= fdt_appendprop_string(blob, offset, "compatible", "spi-flash");
-	if (ret < 0) {
-		printf("Failed to populate spi-nor@0 subnode: %s (%d)\n", fdt_strerror(ret), ret);
+	if (ret < 0)
 		return ret;
-	}
 
 	/*
 	 * Add alias property
@@ -202,16 +227,12 @@ static int board_fix_spi_flash(void *blob)
 	 *     spi0 = "/soc@01c00000/spi@01c05000"
 	 */
 	offset = fdt_path_offset(blob, FDT_PATH_ALIASES);
-	if (offset < 0) {
-		printf("Path \"%s\" not found: %s (%d)\n", FDT_PATH_ALIASES, fdt_strerror(offset), offset);
+	if (offset < 0)
 		return offset;
-	}
 
 	ret = fdt_setprop_string(blob, offset, "spi0", path);
-	if (ret < 0) {
-		printf("Failed to add \"spi0\" to \"/aliases\": %s (%d)\n", fdt_strerror(ret), ret);
+	if (ret < 0)
 		return ret;
-	}
 
 	return 0;
 }
@@ -228,7 +249,7 @@ static int board_fix_nand(void *blob)
 	if (eeprom->config.storage != 'n')
 		return 0;
 
-	debug("Enabling NAND...\n");
+	debug("Updating nand0@0 node...\n");
 
 	/*
 	 * Find /soc@01c00000/pinctrl@01c20800
@@ -243,21 +264,18 @@ static int board_fix_nand(void *blob)
 	 * Test:
 	 * fdt print /soc@01c00000/pinctrl@01c20800/nand0@0
 	 */
-	 offset = get_path_offset(blob, PATH_PINCTRL);
-	 if (offset < 0)
-		 return offset;
+
+	offset = fdt_node_offset_by_compatible(blob, -1, FDT_COMP_PINCTRL);
+	if (offset < 0)
+		return offset;
 
  	offset = fdt_add_subnode(blob, offset, "nand0@0");
- 	if (offset < 0) {
- 		printf("Failed to add subnode: %s (%d)\n", fdt_strerror(offset), offset);
+ 	if (offset < 0)
  		return offset;
- 	}
 
 	phandle = fdt_create_phandle(blob, offset);
-	if (!phandle) {
-		printf("Failed to generate phandle.");
+	if (!phandle)
 		return -1;
-	}
 
  	ret |= fdt_setprop_string(blob, offset, "function" , "nand0");
 
@@ -276,10 +294,8 @@ static int board_fix_nand(void *blob)
 	ret |= fdt_appendprop_string(blob, offset, "pins", "PC14");
 	ret |= fdt_appendprop_string(blob, offset, "pins", "PC15");
 	ret |= fdt_appendprop_string(blob, offset, "pins", "PC16");
- 	if (ret < 0) {
- 		printf("Failed to populate nand0@0 subnode: %s (%d)\n", fdt_strerror(ret), ret);
+ 	if (ret < 0)
  		return ret;
- 	}
 
 	/**
 	 * Find /soc@01c00000/nand@01c03000
@@ -305,10 +321,8 @@ static int board_fix_nand(void *blob)
 	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 1);
 	ret |= fdt_setprop_u32(blob, offset, "pinctrl-0", phandle);
 	ret |= fdt_setprop_string(blob, offset, "pinctrl-names", "default");
-	if (ret < 0) {
-		printf("Failed to update properties for nand0@0 node: %s (%d)\n", fdt_strerror(ret), ret);
+	if (ret < 0)
 		return ret;
-	}
 
 	/**
 	 * Add the following node:
@@ -359,32 +373,25 @@ static int board_fix_nand(void *blob)
 	 *    }
 	 */
 	offset = fdt_add_subnode(blob, offset, "nand@0");
-	if (offset < 0) {
-		printf("Failed to add subnode: %s (%d)\n", fdt_strerror(offset), offset);
+	if (offset < 0)
 		return offset;
-	}
 
 	ret |= fdt_setprop_empty(blob, offset, "nand-on-flash-bbt");
 	ret |= fdt_setprop_string(blob, offset, "nand-ecc-mode", "hw");
 	ret |= fdt_setprop_u32(blob, offset, "allwinner,rb", 0);
 	ret |= fdt_setprop_u32(blob, offset, "reg", 0);
-	if (ret < 0) {
-		printf("Failed to populate nand@0 subnode: %s (%d)\n", fdt_strerror(ret), ret);
+	if (ret < 0)
 		return ret;
-	}
 
 	offset = fdt_add_subnode(blob, offset, "partitions");
-	if (offset < 0) {
-		printf("Failed to add partitions subnode: %s (%d)\n", fdt_strerror(offset), offset);
+	if (offset < 0)
 		return offset;
-	}
+
 	ret |= fdt_setprop_string(blob, offset, "compatible" , "fixed-partitions");
 	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 2);
 	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 2);
-	if (ret < 0) {
-		printf("Failed to update properties for partitions node: %s (%d)\n", fdt_strerror(ret), ret);
+	if (ret < 0)
 		return ret;
-	}
 
 	parent = offset;
 
@@ -411,7 +418,8 @@ static int board_fix_nand(void *blob)
 
 static int (*olinuxino_fixes[]) (void *blob) = {
 	board_fix_spi_flash,
-	board_fix_nand
+	board_fix_nand,
+	board_fix_atecc508a,
 };
 
 int olinuxino_fdt_fixup(void *blob)
@@ -422,10 +430,8 @@ int olinuxino_fdt_fixup(void *blob)
 	debug("Address of FDT blob: %p\n", (uint32_t *)blob);
 
 	ret = fdt_increase_size(blob, 65535);
-	if (ret < 0) {
-		printf("Failed to increase size: %s (%d)\n", fdt_strerror(ret), ret);
+	if (ret < 0)
 		return ret;
-	}
 
 	/* Apply fixes */
 	for (i = 0; i < ARRAY_SIZE(olinuxino_fixes); i++) {
