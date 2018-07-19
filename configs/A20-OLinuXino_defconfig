@@ -24,6 +24,7 @@ CONFIG_SPL_SPI_SUNXI=y
 CONFIG_SPI=y
 CONFIG_DM_SPI=y
 CONFIG_SUN4I_SPI=y
+CONFIG_SPI_FLASH_MTD=y
 
 # CONFIG_ENV_IS_IN_FAT is not set
 
@@ -38,8 +39,9 @@ CONFIG_SYS_NAND_PAGE_SIZE=0x2000
 CONFIG_SYS_NAND_OOBSIZE=0x280
 
 CONFIG_CMD_MTDPARTS=y
-CONFIG_MTDIDS_DEFAULT="nand0=nand.0"
-CONFIG_MTDPARTS_DEFAULT="mtdparts=nand.0:4m(NAND.SPL),4m(NAND.SPL.backup),4m(NAND.u-boot),4m(NAND.u-boot.backup),4m(NAND.u-boot-env),4m(NAND.u-boot-env.backup),4m(NAND.dtb),16m(NAND.kernel),-(NAND.rootfs)"
+CONFIG_MTDIDS_DEFAULT="nand0=nand.0,nor0=nor.0"
+CONFIG_MTDPARTS_DEFAULT="mtdparts=nand.0:4m(NAND.SPL),4m(NAND.SPL.backup),4m(NAND.u-boot),4m(NAND.u-boot.backup),4m(NAND.u-boot-env),4m(NAND.u-boot-env.backup),4m(NAND.dtb),16m(NAND.kernel),-(NAND.rootfs);nor.0:1m(SPI.u-boot),128k(SPI.u-boot-env),128k(SPI.u-boot-env.backup),-(SPI.user)"
+
 
 CONFIG_DM_MMC=y
 CONFIG_SCSI_AHCI=y
@@ -68,6 +70,7 @@ CONFIG_TARGET_A20_OLINUXINO=y
 CONFIG_OF_LIBFDT_OVERLAY=y
 CONFIG_FIT=y
 CONFIG_OF_BOARD_FIXUP=y
+CONFIG_FDT_FIXUP_PARTITIONS=y
 CONFIG_OF_SYSTEM_SETUP=y
 CONFIG_OF_LIST="sun7i-a20-olinuxino-micro sun7i-a20-olinuxino-micro-emmc sun7i-a20-olinuxino-lime sun7i-a20-olinuxino-lime-emmc sun7i-a20-olinuxino-lime2 sun7i-a20-olinuxino-lime2-emmc sun7i-a20-olimex-som-evb sun7i-a20-olimex-som-evb-emmc sun7i-a20-olimex-som204-evb sun7i-a20-olimex-som204-evb-emmc"
 CONFIG_MULTI_DTB_FIT=y

@@ -108,6 +108,8 @@
 
 #ifdef CONFIG_SPL_SPI_SUNXI
 #define CONFIG_SYS_SPI_U_BOOT_OFFS	0x8000
+#define SPI_MTDIDS "nor0=flash.0"
+#define SPI_MTDPARTS "mtdparts=flash.0:1m(SPI.u-boot),128k(SPI.u-boot-env),128k(SPI.u-boot-env.backup),-(SPI.user)"
 #endif
 
 #if defined(CONFIG_ENV_IS_IN_MMC)
@@ -200,6 +202,9 @@
 #define CONFIG_MTD_PARTITIONS
 #define CONFIG_MTD_DEVICE
 
+#define NAND_MTDIDS "nand0=nand.0"
+#define NAND_MTDPARTS "mtdparts=nand.0:4m(NAND.SPL),4m(NAND.SPL.backup),4m(NAND.u-boot),4m(NAND.u-boot.backup),4m(NAND.u-boot-env),4m(NAND.u-boot-env.backup),4m(NAND.dtb),16m(NAND.kernel),-(NAND.rootfs)"
+
 #define	BOOTENV_DEV_NAND(devtypeu, devtypel, instance) \
 	"update_nand=" \
 		"nand erase.part clean NAND.SPL;" \
@@ -211,11 +216,7 @@
 		"nand write 0x60000000 NAND.u-boot 0x200000;" \
 		"nand write 0x60000000 NAND.u-boot.backup 0x200000;" \
 		"nand read 0x70000000 NAND.u-boot 0x200000;" \
-		"md.l 0x60000000 10; md.l 0x70000000 10;\0" \
-	"mtdids=" CONFIG_MTDIDS_DEFAULT "\0" \
-	"mtdparts=" CONFIG_MTDPARTS_DEFAULT "\0"
-
-
+		"md.l 0x60000000 10; md.l 0x70000000 10;\0"
 
 #define BOOTENV_DEV_NAME_NAND(devtypeu, devtypel, instance) \
 		"nand "
@@ -223,7 +224,6 @@
 #define BOOT_TARGET_DEVICES_NAND(func) func(NAND, nand, 0)
 #else
 #define BOOT_TARGET_DEVICES_NAND(func)
-
 #endif
 
 
@@ -295,12 +295,9 @@
 #ifdef CONFIG_DFU_SF
 #define DFU_ALT_INFO_SF \
 	"dfu_alt_info_sf=" \
-		"SPI.SPL part 0 1;" \
-		"SPI.SPL.backup part 0 2;" \
-		"SPI.u-boot part 0 3;" \
-		"SPI.u-boot.backup 0 4;" \
-		"SPI.u-boot-env part 0 5;" \
-		"SPI.u-boot-env.backup 0 6\0"
+		"SPI.u-boot raw 0 0x100000;" \
+		"SPI.u-boot-env raw 0x100000 0x20000;" \
+		"SPI.u-boot-env.backup raw 0x120000 0x20000\0"
 #else
 #define DFU_ALT_INFO_SF ""
 #endif

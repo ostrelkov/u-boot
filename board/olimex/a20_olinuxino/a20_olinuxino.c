@@ -18,6 +18,7 @@
 #include <crc.h>
 #include <mmc.h>
 #include <spl.h>
+#include <cli.h>
 #include <asm/arch/display.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/dram.h>
@@ -523,6 +524,18 @@ static void setup_environment(const void *fdt)
 			if (!env_get("eth2addr"))
 				eth_env_set_enetaddr("eth2addr", mac_addr);
 		}
+
+		/**
+		 * Setup mtdparts
+		 * A20-SOM204xxxx has both eMMC and SPI flash
+		 */
+		if (eeprom->id == 8958 || eeprom->config.storage == 's') {
+			env_set("mtdids", SPI_MTDIDS);
+			env_set("mtdparts", SPI_MTDPARTS);
+		} else if (eeprom->config.storage == 'n') {
+			env_set("mtdids", NAND_MTDIDS);
+			env_set("mtdparts", NAND_MTDPARTS);
+		}
 	}
 
 	ret = sunxi_get_sid(sid);
@@ -593,6 +606,12 @@ int misc_init_r(void)
 
 #ifdef CONFIG_USB_ETHER
 	usb_ether_init();
+#endif
+
+#ifdef CONFIG_DM_SPI_FLASH
+	if (olimex_eeprom_is_valid() && eeprom->config.storage == 's') {
+		run_command("sf probe", 0);
+	}
 #endif
 	return 0;
 }

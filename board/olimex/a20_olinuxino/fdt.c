@@ -12,6 +12,8 @@
 #include <linux/libfdt.h>
 #include <linux/sizes.h>
 #include <fdt_support.h>
+#include <jffs2/load_kernel.h>
+#include <mtd_node.h>
 
 #include "board_detect.h"
 
@@ -64,26 +66,27 @@ struct __nand_partition {
 	NAND_PART("NAND.SPL",			0x00000000,	SZ_4M),
 };
 
-static int get_path_offset(void *blob, enum devices dev)
+static int get_path_offset(void *blob, enum devices dev, char *dpath)
 {
 	char path[64];
 	int offset;
 
 	sprintf(path, "/soc@1c00000/%s@%x", paths[dev].name, paths[dev].addr);
-	debug("Searching for \"%s\"\n", path);
-
 	offset = fdt_path_offset(blob, path);
 	if (offset >= 0)
-		return offset;
+		goto success;
 
 	sprintf(path, "/soc@01c00000/%s@%08x", paths[dev].name, paths[dev].addr);
-	debug("Searching for \"%s\"\n", path);
-
 	offset = fdt_path_offset(blob, path);
 	if (offset >= 0)
-		return offset;
+		goto success;
 
 	printf("Path \"%s\" not found: %s (%d)\n", path, fdt_strerror(offset), offset);
+	return offset;
+
+success:
+	if (path != NULL)
+		strcpy(dpath, path);
 	return offset;
 }
 
@@ -109,7 +112,7 @@ static int board_fix_atecc508a(void *blob)
 	 *         reg = <0x60>;
 	 * };
 	 */
-	offset = get_path_offset(blob, PATH_I2C2);
+	offset = get_path_offset(blob, PATH_I2C2, NULL);
  	if (offset < 0)
  		return offset;
 
@@ -184,7 +187,7 @@ static int board_fix_spi_flash(void *blob)
 	 * Test:
 	 * fdt print /soc@01c00000/spi@01c05000
 	 */
-	offset = get_path_offset(blob, PATH_SPI0);
+	offset = get_path_offset(blob, PATH_SPI0, path);
  	if (offset < 0)
  		return offset;
 
@@ -313,7 +316,7 @@ static int board_fix_nand(void *blob)
 	 * fdt print /soc@01c00000/nand@01c03000
 	 */
 
-	offset = get_path_offset(blob, PATH_NAND);
+	offset = get_path_offset(blob, PATH_NAND, NULL);
  	if (offset < 0)
  		return offset;
 
@@ -465,6 +468,19 @@ int board_fix_fdt(void *blob)
 #if defined(CONFIG_OF_SYSTEM_SETUP)
 int ft_system_setup(void *blob, bd_t *bd)
 {
-	return olinuxino_fdt_fixup(blob);
+	int ret;
+#ifdef CONFIG_FDT_FIXUP_PARTITIONS
+	static struct node_info nodes[] = {
+		{ "winbond,w25q128", MTD_DEV_TYPE_NOR, },
+	};
+#endif
+	ret = olinuxino_fdt_fixup(blob);
+	if (ret < 0)
+		return ret;
+
+#ifdef CONFIG_FDT_FIXUP_PARTITIONS
+	fdt_fixup_mtdparts(blob, nodes, ARRAY_SIZE(nodes));
+#endif
+	return ret;
 }
 #endif
