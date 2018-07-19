@@ -39,11 +39,16 @@ CONFIG_SYS_NAND_OOBSIZE=0x280
 
 CONFIG_CMD_MTDPARTS=y
 CONFIG_MTDIDS_DEFAULT="nand0=nand.0"
-CONFIG_MTDPARTS_DEFAULT="mtdparts=nand.0:4m(NAND.SPL),4m(NAND.SPL.backup),4m(NAND.u-boot),4m(NAND.u-boot.backup),4m(NAND.u-boot-env),4m(NAND.u-boot-env.backup),-(NAND.rootfs)"
+CONFIG_MTDPARTS_DEFAULT="mtdparts=nand.0:4m(NAND.SPL),4m(NAND.SPL.backup),4m(NAND.u-boot),4m(NAND.u-boot.backup),4m(NAND.u-boot-env),4m(NAND.u-boot-env.backup),4m(NAND.dtb),16m(NAND.kernel),-(NAND.rootfs)"
 
 CONFIG_DM_MMC=y
 CONFIG_SCSI_AHCI=y
+
+CONFIG_DFU_MMC=y
+CONFIG_DFU_NAND=y
 CONFIG_DFU_RAM=y
+CONFIG_DFU_SF=y
+
 CONFIG_FASTBOOT_CMD_OEM_FORMAT=y
 # CONFIG_PHY_ADDR_ENABLE is not set
 CONFIG_ETH_DESIGNWARE=y
@@ -68,3 +73,7 @@ CONFIG_OF_LIST="sun7i-a20-olinuxino-micro sun7i-a20-olinuxino-micro-emmc sun7i-a
 CONFIG_MULTI_DTB_FIT=y
 
 CONFIG_BOARD_EARLY_INIT_R=y
+
+CONFIG_USB_GADGET_MANUFACTURER="Olimex Ltd."
+CONFIG_USB_GADGET_VENDOR_NUM=0x15ba
+CONFIG_USB_GADGET_PRODUCT_NUM=0x041

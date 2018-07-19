@@ -53,7 +53,9 @@ struct __nand_partition {
 	uint32_t lenght;
 
 } nand_partitions[] = {
-	NAND_PART("NAND.rootfs",		0x01800000,	0xFE800000),
+	NAND_PART("NAND.rootfs",		0x02C00000,	0xFD400000),	/* TODO: Actually check nand size! */
+	NAND_PART("NAND.kernel",		0x01C00000,	SZ_16M),
+	NAND_PART("NAND.dtb",			0x01800000,	SZ_4M),
 	NAND_PART("NAND.u-boot-env.backup",	0x01400000,	SZ_4M),
 	NAND_PART("NAND.u-boot-env",		0x01000000,	SZ_4M),
 	NAND_PART("NAND.u-boot.backup",		0x00C00000,	SZ_4M),
@@ -367,8 +369,18 @@ static int board_fix_nand(void *blob)
 	 *         };
 	 *
 	 *         partition@1800000 {
+	 *             label = "NAND.dtb";
+	 *             reg = <0x0 0x1800000 0x0 0x400000>;
+	 *         };
+	 *
+	 *         partition@1c00000 {
+	 *             label = "NAND.kernel";
+	 *             reg = <0x0 0x1c00000 0x0 0x1000000>;
+	 *         };
+
+	 *         partition@2c00000 {
 	 *             label = "NAND.rootfs";
-	 *             reg = <0x0 0x1800000 0x0 0xfe800000>;
+	 *             reg = <0x0 0x2c00000 0x0 0xfd400000>;
 	 *         };
 	 *    }
 	 */

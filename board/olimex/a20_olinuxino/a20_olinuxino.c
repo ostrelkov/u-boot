@@ -255,7 +255,7 @@ void board_nand_init(void)
 	sunxi_nand_init();
 #endif
 }
-#endif
+#endif /* CONFIG_NAND_SUNXI */
 
 #ifdef CONFIG_MMC
 static void mmc_pinmux_setup(int sdc)
@@ -317,7 +317,22 @@ int board_mmc_init(bd_t *bis)
 
 	return 0;
 }
-#endif
+#ifndef CONFIG_SPL_BUILD
+int mmc_get_env_dev(void)
+{
+	unsigned long bootdev = 0;
+	char *bootdev_string;
+
+	bootdev_string = env_get("mmc_bootdev");
+
+	if (bootdev_string) {
+		bootdev = simple_strtoul(bootdev_string, NULL, 10);
+	}
+	return bootdev;
+}
+#endif /* !CONFIG_SPL_BUILD */
+
+#endif /* CONFIG_MMC */
 
 #ifdef CONFIG_BOARD_EARLY_INIT_R
 int board_early_init_r(void)
@@ -334,7 +349,7 @@ int board_early_init_r(void)
 #endif
 	return 0;
 }
-#endif
+#endif /* CONFIG_BOARD_EARLY_INIT_R */
 
 void sunxi_board_init(void)
 {
@@ -408,7 +423,7 @@ int g_dnl_board_usb_cable_connected(void)
 
 	return ret;
 }
-#endif
+#endif /* CONFIG_USB_GADGET */
 
 #ifdef CONFIG_SERIAL_TAG
 void get_board_serial(struct tag_serialnr *serialnr)
@@ -428,7 +443,7 @@ void get_board_serial(struct tag_serialnr *serialnr)
 		serialnr->low = 0;
 	}
 }
-#endif
+#endif /* CONFIG_SERIAL_TAG */
 
 /*
  * Check the SPL header for the "sunxi" variant. If found: parse values
@@ -637,7 +652,7 @@ int show_board_info(void)
 	return 0;
 }
 
-#if defined(CONFIG_MULTI_DTB_FIT)
+#ifdef CONFIG_MULTI_DTB_FIT
 int board_fit_config_name_match(const char *name)
 {
 	const char *dtb;
@@ -648,19 +663,45 @@ int board_fit_config_name_match(const char *name)
 	dtb = olimex_get_board_fdt(eeprom->id);
 	return (!strncmp(name, dtb, strlen(dtb) - 4)) ? 0 : -1;
 }
+#endif /* CONFIG_MULTI_DTB_FIT */
+
+#ifdef CONFIG_SET_DFU_ALT_INFO
+void set_dfu_alt_info(char *interface, char *devstr)
+{
+	char *p = NULL;
+	int dev;
+
+	printf("interface: %s, devstr: %s\n", interface, devstr);
+
+#ifdef CONFIG_DFU_MMC
+	if (!strcmp(interface, "mmc")) {
+		dev = simple_strtoul(devstr, NULL, 10);
+		if (dev == 0 )
+			p = env_get("dfu_alt_info_mmc0");
+		else if (dev == 1)
+			p = env_get("dfu_alt_info_mmc1");
+	}
 #endif
 
-int mmc_get_env_dev(void)
-{
-	unsigned long bootdev = 0;
-	char *bootdev_string;
+#ifdef CONFIG_DFU_RAM
+	if (!strcmp(interface, "ram"))
+		p = env_get("dfu_alt_info_ram");
+#endif
 
-	bootdev_string = env_get("mmc_bootdev");
+#ifdef CONFIG_DFU_NAND
+	if (!strcmp(interface, "nand"))
+		p = env_get("dfu_alt_info_nand");
+#endif
 
-	if (bootdev_string) {
-		bootdev = simple_strtoul(bootdev_string, NULL, 10);
-	}
-	return bootdev;
+#ifdef CONFIG_DFU_SF
+	if (!strcmp(interface, "sf"))
+		p = env_get("dfu_alt_info_sf");
+#endif
+
+	if (p != NULL)
+		env_set("dfu_alt_info", p);
 }
 
-#endif
+#endif /* CONFIG_SET_DFU_ALT_INFO */
+
+#endif /* !CONFIG_SPL_BUILD */

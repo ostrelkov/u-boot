@@ -254,6 +254,67 @@
 	"ramdisk_addr_r=" RAMDISK_ADDR_R "\0" \
 	"fit_addr_r=0x50000000\0"
 
+
+#ifdef CONFIG_DFU
+#define CONFIG_SET_DFU_ALT_INFO
+
+#ifdef CONFIG_DFU_MMC
+#define DFU_ALT_INFO_MMC0 ""
+#define DFU_ALT_INFO_MMC2 ""
+#else
+#define DFU_ALT_INFO_MMC0 ""
+#define DFU_ALT_INFO_MMC2 ""
+#endif
+
+#ifdef CONFIG_DFU_NAND
+#define DFU_ALT_INFO_NAND \
+	"dfu_alt_info_nand=" \
+		"NAND.SPL raw 0x00000000 0x00400000;" \
+		"NAND.SPL.backup part 0 2;" \
+		"NAND.u-boot part 0 3;" \
+		"NAND.u-boot.backup part 0 4;" \
+		"NAND.u-boot-env part 0 5;" \
+		"NAND.u-boot-env.backup part 0 6;" \
+		"NAND.dtb part 0 7;" \
+		"NAND.kernel part 0 8;" \
+		"NAND.rootfs part 0 9\0"
+#else
+#define DFU_ALT_INFO_NAND ""
+#endif
+
+#ifdef CONFIG_DFU_RAM
+#define DFU_ALT_INFO_RAM \
+	"dfu_alt_info_ram=" \
+	"kernel ram " KERNEL_ADDR_R " 0x1000000;" \
+	"fdt ram " FDT_ADDR_R " 0x100000;" \
+	"ramdisk ram " RAMDISK_ADDR_R " 0x4000000\0"
+#else
+#define DFU_ALT_INFO_RAM ""
+#endif
+
+#ifdef CONFIG_DFU_SF
+#define DFU_ALT_INFO_SF \
+	"dfu_alt_info_sf=" \
+		"SPI.SPL part 0 1;" \
+		"SPI.SPL.backup part 0 2;" \
+		"SPI.u-boot part 0 3;" \
+		"SPI.u-boot.backup 0 4;" \
+		"SPI.u-boot-env part 0 5;" \
+		"SPI.u-boot-env.backup 0 6\0"
+#else
+#define DFU_ALT_INFO_SF ""
+#endif
+
+#define DFU_ALT_INFO \
+	DFU_ALT_INFO_MMC0 \
+	DFU_ALT_INFO_MMC2 \
+	DFU_ALT_INFO_RAM \
+	DFU_ALT_INFO_NAND \
+	DFU_ALT_INFO_SF
+
+#endif /* CONFIG_DFU */
+
+
 #ifdef CONFIG_MMC
 #define BOOTENV_DEV_MMC_AUTO(devtypeu, devtypel, instance)		\
 	BOOTENV_DEV_MMC(MMC, mmc, 0)					\
@@ -339,6 +400,7 @@
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	CONSOLE_ENV_SETTINGS \
 	MEM_LAYOUT_ENV_SETTINGS \
+	DFU_ALT_INFO \
 	"console=ttyS0,115200\0" \
 	BOOTENV
 

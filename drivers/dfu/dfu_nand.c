@@ -62,8 +62,33 @@ static int nand_block_op(enum dfu_op op, struct dfu_entity *dfu,
 		if (ret)
 			return ret;
 		/* then write */
+#if 0
 		ret = nand_write_skip_bad(mtd, start, &count, &actual,
-					  lim, buf, WITH_WR_VERIFY);
+					  lim, buf, 0);
+#else
+		count = count / (mtd->writesize + mtd->oobsize);
+
+		while (count--) {
+			/* Raw access */
+			mtd_oob_ops_t ops = {
+				.datbuf = (u8 *)buf,
+				.oobbuf = ((u8 *)buf) + mtd->writesize,
+				.len = mtd->writesize,
+				.ooblen = mtd->oobsize,
+				.mode = MTD_OPS_RAW
+			};
+
+			ret = mtd_write_oob(mtd, offset, &ops);
+			if (ret) {
+				printf("%s: error at offset %llx, ret %d\n",
+					__func__, (long long)offset, ret);
+				break;
+			}
+
+			buf += mtd->writesize + mtd->oobsize;
+			offset += mtd->writesize;
+		}
+#endif
 	}
 
 	if (ret != 0) {
