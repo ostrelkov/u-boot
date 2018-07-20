@@ -115,20 +115,39 @@ void i2c_init_board(void)
 #endif
 }
 
-#if defined(CONFIG_ENV_IS_IN_EXT4) || \
-    defined(CONFIG_ENV_IS_IN_FAT) || \
-    defined(CONFIG_ENV_IS_IN_SPI_FLASH)
+#if defined(CONFIG_ENV_IS_IN_SPI_FLASH) || defined(CONFIG_ENV_IS_IN_FAT) || defined(CONFIG_ENV_IS_IN_EXT4)
 enum env_location env_get_location(enum env_operation op, int prio)
 {
 	uint32_t boot = sunxi_get_boot_device();
-	debug("%s(): prio: %d, boot: %d\n", __func__, prio, boot);
 
 	switch (boot) {
+		/* In case of FEL boot check board storage */
 		case BOOT_DEVICE_BOARD:
-			return ENVL_NOWHERE;
+			if (olimex_eeprom_is_valid() &&
+			    eeprom->config.storage == 's') {
+				switch (prio) {
+					case 0:
+						return ENVL_SPI_FLASH;
+					case 1:
+						return ENVL_EXT4;
+					case 2:
+						return ENVL_FAT;
+					default:
+						return ENVL_UNKNOWN;
+				}
+
+			} else {
+				if (prio == 0)
+					return ENVL_EXT4;
+				else if (prio == 1)
+					return ENVL_FAT;
+				else
+					return ENVL_UNKNOWN;
+
+			}
 
 		case BOOT_DEVICE_SPI:
-			return ENVL_SPI_FLASH;
+			return (prio == 0) ? ENVL_SPI_FLASH : ENVL_UNKNOWN;
 
 		case BOOT_DEVICE_MMC1:
 		case BOOT_DEVICE_MMC2:
@@ -142,8 +161,8 @@ enum env_location env_get_location(enum env_operation op, int prio)
 		default:
 			return ENVL_UNKNOWN;
 	}
-}
 #endif
+}
 
 
 /* add board specific code here */

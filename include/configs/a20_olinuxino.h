@@ -108,8 +108,12 @@
 
 #ifdef CONFIG_SPL_SPI_SUNXI
 #define CONFIG_SYS_SPI_U_BOOT_OFFS	0x8000
-#define SPI_MTDIDS "nor0=flash.0"
-#define SPI_MTDPARTS "mtdparts=flash.0:1m(SPI.u-boot),128k(SPI.u-boot-env),128k(SPI.u-boot-env.backup),-(SPI.user)"
+#endif
+
+#if defined(CONFIG_ENV_IS_IN_SPI_FLASH)
+#define CONFIG_ENV_OFFSET_REDUND	( CONFIG_ENV_OFFSET + CONFIG_ENV_SIZE)
+#define CONFIG_ENV_SIZE_REDUND		CONFIG_ENV_SIZE
+#define CONFIG_SYS_REDUNDAND_ENVIRONMENT
 #endif
 
 #if defined(CONFIG_ENV_IS_IN_MMC)
@@ -311,6 +315,10 @@
 
 #endif /* CONFIG_DFU */
 
+#ifdef CONFIG_SPI_FLASH
+#define SPI_MTDIDS "nor0=flash.0"
+#define SPI_MTDPARTS "mtdparts=flash.0:1m(SPI.u-boot),128k(SPI.u-boot-env),128k(SPI.u-boot-env.backup),-(SPI.user)"
+#endif
 
 #ifdef CONFIG_MMC
 #define BOOTENV_DEV_MMC_AUTO(devtypeu, devtypel, instance)		\
