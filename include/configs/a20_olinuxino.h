@@ -317,7 +317,7 @@
 
 #ifdef CONFIG_SPI_FLASH
 #define SPI_MTDIDS "nor0=flash.0"
-#define SPI_MTDPARTS "mtdparts=flash.0:1m(SPI.u-boot),128k(SPI.u-boot-env),128k(SPI.u-boot-env.backup),-(SPI.user)"
+#define SPI_MTDPARTS "mtdparts=flash.0:2m(SPI.u-boot),128k(SPI.u-boot-env),128k(SPI.u-boot-env.backup),-(SPI.user)"
 #endif
 
 #ifdef CONFIG_MMC
