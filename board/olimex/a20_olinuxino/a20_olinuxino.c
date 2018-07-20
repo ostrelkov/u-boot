@@ -135,7 +135,6 @@ enum env_location env_get_location(enum env_operation op, int prio)
 					default:
 						return ENVL_UNKNOWN;
 				}
-
 			} else {
 				if (prio == 0)
 					return ENVL_EXT4;
@@ -161,9 +160,40 @@ enum env_location env_get_location(enum env_operation op, int prio)
 		default:
 			return ENVL_UNKNOWN;
 	}
-#endif
 }
+#endif
 
+#if defined(CONFIG_ENV_IS_IN_FAT)
+char *get_fat_device_and_part(void)
+{
+	uint32_t boot = sunxi_get_boot_device();
+
+	switch (boot) {
+		case BOOT_DEVICE_MMC1:
+			return "0:auto";
+		case BOOT_DEVICE_MMC2:
+			return "1:auto";
+		default:
+			return CONFIG_ENV_FAT_DEVICE_AND_PART;
+	}
+}
+#endif
+
+#if defined(CONFIG_ENV_IS_IN_EXT4)
+char *get_ext4_device_and_part(void)
+{
+	uint32_t boot = sunxi_get_boot_device();
+
+	switch (boot) {
+		case BOOT_DEVICE_MMC1:
+			return "0:auto";
+		case BOOT_DEVICE_MMC2:
+			return "1:auto";
+		default:
+			return CONFIG_ENV_EXT4_DEVICE_AND_PART;
+	}
+}
+#endif
 
 /* add board specific code here */
 int board_init(void)

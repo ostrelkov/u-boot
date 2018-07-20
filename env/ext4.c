@@ -30,6 +30,11 @@
 #include <ext4fs.h>
 #include <mmc.h>
 
+__weak char *get_fat_device_and_part(void)
+{
+	return CONFIG_ENV_EXT4_DEVICE_AND_PART;
+}
+
 #ifdef CONFIG_CMD_SAVEENV
 static int env_ext4_save(void)
 {
@@ -44,7 +49,7 @@ static int env_ext4_save(void)
 		return err;
 
 	part = blk_get_device_part_str(CONFIG_ENV_EXT4_INTERFACE,
-				       CONFIG_ENV_EXT4_DEVICE_AND_PART,
+				       get_fat_device_and_part(),
 				       &dev_desc, &info, 1);
 	if (part < 0)
 		return 1;
@@ -55,7 +60,7 @@ static int env_ext4_save(void)
 	if (!ext4fs_mount(info.size)) {
 		printf("\n** Unable to use %s %s for saveenv **\n",
 		       CONFIG_ENV_EXT4_INTERFACE,
-		       CONFIG_ENV_EXT4_DEVICE_AND_PART);
+		       get_fat_device_and_part());
 		return 1;
 	}
 
@@ -90,7 +95,7 @@ static int env_ext4_load(void)
 #endif
 
 	part = blk_get_device_part_str(CONFIG_ENV_EXT4_INTERFACE,
-				       CONFIG_ENV_EXT4_DEVICE_AND_PART,
+				       get_fat_device_and_part(),
 				       &dev_desc, &info, 1);
 	if (part < 0)
 		goto err_env_relocate;
@@ -101,7 +106,7 @@ static int env_ext4_load(void)
 	if (!ext4fs_mount(info.size)) {
 		printf("\n** Unable to use %s %s for loading the env **\n",
 		       CONFIG_ENV_EXT4_INTERFACE,
-		       CONFIG_ENV_EXT4_DEVICE_AND_PART);
+		       get_fat_device_and_part());
 		goto err_env_relocate;
 	}
 

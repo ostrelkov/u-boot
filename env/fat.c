@@ -30,6 +30,11 @@
 # endif
 #endif
 
+__weak char *get_fat_device_and_part(void)
+{
+	return CONFIG_ENV_FAT_DEVICE_AND_PART;
+}
+
 #ifdef CMD_SAVEENV
 static int env_fat_save(void)
 {
@@ -45,7 +50,7 @@ static int env_fat_save(void)
 		return err;
 
 	part = blk_get_device_part_str(CONFIG_ENV_FAT_INTERFACE,
-					CONFIG_ENV_FAT_DEVICE_AND_PART,
+					get_fat_device_and_part(),
 					&dev_desc, &info, 1);
 	if (part < 0)
 		return 1;
@@ -92,7 +97,7 @@ static int env_fat_load(void)
 #endif
 
 	part = blk_get_device_part_str(CONFIG_ENV_FAT_INTERFACE,
-					CONFIG_ENV_FAT_DEVICE_AND_PART,
+					get_fat_device_and_part(),
 					&dev_desc, &info, 1);
 	if (part < 0)
 		goto err_env_relocate;
