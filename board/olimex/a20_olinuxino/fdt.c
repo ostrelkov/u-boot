@@ -225,6 +225,14 @@ static int board_fix_spi_flash(void *blob)
 	if (ret < 0)
 		return ret;
 
+	offset = fdt_add_subnode(blob, offset, "partitions");
+	if (offset < 0)
+		return offset;
+	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 1);
+	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 1);
+	ret |= fdt_setprop_string(blob, offset, "compatible", "fixed-partitions");
+
+
 	/*
 	 * Add alias property
 	 *
@@ -471,7 +479,7 @@ int ft_system_setup(void *blob, bd_t *bd)
 	int ret;
 #ifdef CONFIG_FDT_FIXUP_PARTITIONS
 	static struct node_info nodes[] = {
-		{ "winbond,w25q128", MTD_DEV_TYPE_NOR, },
+		{ "fixed-partitions", MTD_DEV_TYPE_NOR, },
 	};
 #endif
 	ret = olinuxino_fdt_fixup(blob);

@@ -299,9 +299,9 @@
 #ifdef CONFIG_DFU_SF
 #define DFU_ALT_INFO_SF \
 	"dfu_alt_info_sf=" \
-		"SPI.u-boot raw 0 0x100000;" \
-		"SPI.u-boot-env raw 0x100000 0x20000;" \
-		"SPI.u-boot-env.backup raw 0x120000 0x20000\0"
+		"SPI.u-boot raw 0 0x200000;" \
+		"SPI.u-boot-env raw 0x200000 0x20000;" \
+		"SPI.u-boot-env.backup raw 0x220000 0x20000\0"
 #else
 #define DFU_ALT_INFO_SF ""
 #endif

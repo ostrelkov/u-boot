@@ -33,7 +33,7 @@ CONFIG_ENV_IS_IN_EXT4=y
 CONFIG_ENV_EXT4_INTERFACE="mmc"
 CONFIG_ENV_EXT4_DEVICE_AND_PART="0:auto"
 CONFIG_ENV_IS_IN_SPI_FLASH=y
-CONFIG_ENV_OFFSET=0x100000
+CONFIG_ENV_OFFSET=0x200000
 CONFIG_ENV_SIZE=0x20000
 
 CONFIG_MTD=y
@@ -48,7 +48,7 @@ CONFIG_SYS_NAND_OOBSIZE=0x280
 
 CONFIG_CMD_MTDPARTS=y
 CONFIG_MTDIDS_DEFAULT="nand0=nand.0,nor0=nor.0"
-CONFIG_MTDPARTS_DEFAULT="mtdparts=nand.0:4m(NAND.SPL),4m(NAND.SPL.backup),4m(NAND.u-boot),4m(NAND.u-boot.backup),4m(NAND.u-boot-env),4m(NAND.u-boot-env.backup),4m(NAND.dtb),16m(NAND.kernel),-(NAND.rootfs);nor.0:1m(SPI.u-boot),128k(SPI.u-boot-env),128k(SPI.u-boot-env.backup),-(SPI.user)"
+CONFIG_MTDPARTS_DEFAULT="mtdparts=nand.0:4m(NAND.SPL),4m(NAND.SPL.backup),4m(NAND.u-boot),4m(NAND.u-boot.backup),4m(NAND.u-boot-env),4m(NAND.u-boot-env.backup),4m(NAND.dtb),16m(NAND.kernel),-(NAND.rootfs);nor.0:2m(SPI.u-boot),128k(SPI.u-boot-env),128k(SPI.u-boot-env.backup),-(SPI.user)"
 
 
 CONFIG_DM_MMC=y
