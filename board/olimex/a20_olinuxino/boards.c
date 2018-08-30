@@ -102,6 +102,10 @@ struct olinuxino_boards olinuxino_boards[] = {
 		OLINUXINO_BOARD(8918, "A20-OLinuXino-MICRO-n8GB", "sun7i-a20-olinuxino-micro.dtb")
 		OLINUXINO_CONFIG(NAND, GBYTES(8), GBYTES(1), COM)
 	},
+	{
+		OLINUXINO_BOARD(9231, "A20-OLinuXino-MICRO-s16MB", "sun7i-a20-olinuxino-micro.dtb")
+		OLINUXINO_CONFIG(SPI, MBYTES(16), GBYTES(1), COM)
+	},
 
 	/* T2-OLinuXino-MICRO */
 	{
@@ -202,6 +206,7 @@ bool olimex_board_is_micro(uint32_t id)
 		case 8828:
 		case 4615:
 		case 8918:
+		case 9231:
 		case 9223:
 		case 9235:
 		case 9227:
