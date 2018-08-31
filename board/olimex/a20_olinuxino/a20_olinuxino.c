@@ -695,6 +695,15 @@ int show_board_info(void)
 		return 0;
 	}
 
+	/**
+	 * In case of lowercase revision number, rewrite eeprom
+	 */
+	if (eeprom->revision.major >= 'a' && eeprom->revision.major <= 'z') {
+		eeprom->revision.major -= 0x20;
+
+		olimex_i2c_eeprom_write();
+	}
+
 	/* Get board name and compare if with eeprom content */
 	name = olimex_get_board_name(eeprom->id);
 
