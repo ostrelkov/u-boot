@@ -22,6 +22,10 @@ struct olinuxino_boards olinuxino_boards[] = {
 		OLINUXINO_BOARD(8934, "A20-OLinuXino-LIME-n8GB", "sun7i-a20-olinuxino-lime.dtb")
 		OLINUXINO_CONFIG(NAND, GBYTES(8), MBYTES(512), COM)
 	},
+	{
+		OLINUXINO_BOARD(9076, "A20-OLinuXino-LIME-s16MB", "sun7i-a20-olinuxino-lime.dtb")
+		OLINUXINO_CONFIG(SPI, MBYTES(16), MBYTES(512), COM)
+	},
 
 	/* T2-OLinuXino-Lime */
 	{
@@ -45,6 +49,10 @@ struct olinuxino_boards olinuxino_boards[] = {
 	{
 		OLINUXINO_BOARD(8340, "A20-OLinuXino-LIME2-e4GB", "sun7i-a20-olinuxino-lime2-emmc.dtb")
 		OLINUXINO_CONFIG(EMMC, GBYTES(4), GBYTES(1), COM)
+	},
+	{
+		OLINUXINO_BOARD(9166, "A20-OLinuXino-LIME2-e16GB", "sun7i-a20-olinuxino-lime2-emmc.dtb")
+		OLINUXINO_CONFIG(EMMC, GBYTES(16), GBYTES(1), COM)
 	},
 	{
 		OLINUXINO_BOARD(7624, "A20-OLinuXino-LIME2-n4GB", "sun7i-a20-olinuxino-lime2.dtb")
@@ -155,7 +163,7 @@ struct olinuxino_boards olinuxino_boards[] = {
 
 	/* A20-SOM204 */
 	{
-		OLINUXINO_BOARD(8991, "A20-SOM204", "sun7i-a20-olimex-som204-evb.dtb")
+		OLINUXINO_BOARD(8991, "A20-SOM204-1G", "sun7i-a20-olimex-som204-evb.dtb")
 		OLINUXINO_CONFIG(NONE, -1, GBYTES(1), COM)
 	},
 	{
@@ -207,6 +215,7 @@ bool olimex_board_is_micro(uint32_t id)
 		case 4615:
 		case 8918:
 		case 9231:
+
 		case 9223:
 		case 9235:
 		case 9227:
@@ -223,6 +232,8 @@ bool olimex_board_is_lime(uint32_t id)
 		case 7739:
 		case 7743:
 		case 8934:
+		case 9076:
+
 		case 9211:
 		case 9215:
 		case 9219:
@@ -238,9 +249,11 @@ bool olimex_board_is_lime2(uint32_t id)
 	switch (id) {
 		case 7701:
 		case 8340:
+		case 9166:
 		case 7624:
 		case 8910:
 		case 8946:
+
 		case 9239:
 		case 9247:
 		case 9243:
@@ -260,6 +273,7 @@ bool olimex_board_is_som_evb(uint32_t id)
 		case 8922:
 		case 9155:
 		case 9148:
+
 		case 9259:
 			return true;
 
