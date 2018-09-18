@@ -292,3 +292,18 @@ bool olimex_board_is_som204_evb(uint32_t id)
 			return false;
 	}
 }
+
+const char * olimex_get_lcd_pwr_pin(uint32_t id)
+{
+	if (olimex_board_is_som_evb(id))
+		return "PH7";
+	else if (olimex_board_is_som204_evb(id))
+		return "PC24";
+	else
+		return "PH8";
+}
+
+const char * olimex_get_lcd_pwm_pin(uint32_t id)
+{
+	return "PB2";
+}

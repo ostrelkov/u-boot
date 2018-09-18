@@ -797,6 +797,7 @@ config VIDEO_COMPOSITE
 	---help---
 	Say Y here to add support for outputting composite video.
 
+if !VIDEO_LCD_PANEL_OLINUXINO
 config VIDEO_LCD_MODE
 	string "LCD panel timing details"
 	depends on VIDEO_SUNXI
@@ -878,7 +879,7 @@ config VIDEO_LCD_PANEL_I2C_SCL
 	---help---
 	Set the SCL pin for the LCD i2c interface. This takes a string in the
 	format understood by sunxi_name_to_gpio, e.g. PH1 for pin 1 of port H.
-
+endif
 
 # Note only one of these may be selected at a time! But hidden choices are
 # not supported by Kconfig
@@ -917,6 +918,11 @@ config VIDEO_LCD_PANEL_PARALLEL
 config VIDEO_LCD_PANEL_LVDS
 	bool "Generic lvds interface LCD panel"
 	select VIDEO_LCD_IF_LVDS
+
+config VIDEO_LCD_PANEL_OLINUXINO
+	bool "Olimex LCD-OLinuXino LCD panel"
+	select VIDEO_LCD_IF_PARALLEL
+	select I2C2_ENABLE
 
 config VIDEO_LCD_PANEL_MIPI_4_LANE_513_MBPS_VIA_SSD2828
 	bool "MIPI 4-lane, 513Mbps LCD panel via SSD2828 bridge chip"

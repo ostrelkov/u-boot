@@ -31,12 +31,23 @@
 #include "../ssd2828.h"
 #include "simplefb_common.h"
 
+#ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
+#include "../../../board/olimex/a20_olinuxino/boards.h"
+#include "../../../board/olimex/a20_olinuxino/board_detect.h"
+#include "../../../board/olimex/a20_olinuxino/lcd_olinuxino.h"
+#endif
+
+#ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
+#define PWM_ON 0
+#define PWM_OFF 1
+#else
 #ifdef CONFIG_VIDEO_LCD_BL_PWM_ACTIVE_LOW
 #define PWM_ON 0
 #define PWM_OFF 1
 #else
 #define PWM_ON 1
 #define PWM_OFF 0
+#endif
 #endif
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -547,6 +558,7 @@ static void sunxi_lcdc_panel_enable(void)
 {
 	int pin, reset_pin;
 
+#ifndef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
 	/*
 	 * Start with backlight disabled to avoid the screen flashing to
 	 * white while the lcd inits.
@@ -556,22 +568,36 @@ static void sunxi_lcdc_panel_enable(void)
 		gpio_request(pin, "lcd_backlight_enable");
 		gpio_direction_output(pin, 0);
 	}
+#endif
 
+
+#ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
+	pin = sunxi_name_to_gpio(olimex_get_lcd_pwm_pin(eeprom->id));
+#else
 	pin = sunxi_name_to_gpio(CONFIG_VIDEO_LCD_BL_PWM);
+#endif
 	if (pin >= 0) {
 		gpio_request(pin, "lcd_backlight_pwm");
 		gpio_direction_output(pin, PWM_OFF);
 	}
 
+#ifndef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
 	reset_pin = sunxi_name_to_gpio(CONFIG_VIDEO_LCD_RESET);
 	if (reset_pin >= 0) {
 		gpio_request(reset_pin, "lcd_reset");
 		gpio_direction_output(reset_pin, 0); /* Assert reset */
 	}
+#else
+	reset_pin = -1;
+#endif
 
 	/* Give the backlight some time to turn off and power up the panel. */
 	mdelay(40);
+#ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
+	pin = sunxi_name_to_gpio(olimex_get_lcd_pwr_pin(eeprom->id));
+#else
 	pin = sunxi_name_to_gpio(CONFIG_VIDEO_LCD_POWER);
+#endif
 	if (pin >= 0) {
 		gpio_request(pin, "lcd_power");
 		gpio_direction_output(pin, 1);
@@ -591,11 +617,18 @@ static void sunxi_lcdc_backlight_enable(void)
 	 */
 	mdelay(40);
 
+#ifndef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
 	pin = sunxi_name_to_gpio(CONFIG_VIDEO_LCD_BL_EN);
 	if (pin >= 0)
 		gpio_direction_output(pin, 1);
+#endif
 
+#ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
+	pin = sunxi_name_to_gpio(olimex_get_lcd_pwm_pin(eeprom->id));
+#else
 	pin = sunxi_name_to_gpio(CONFIG_VIDEO_LCD_BL_PWM);
+#endif
+
 #ifdef SUNXI_PWM_PIN0
 	if (pin == SUNXI_PWM_PIN0) {
 		writel(SUNXI_PWM_CTRL_POLARITY0(PWM_ON) |
@@ -669,8 +702,13 @@ static void sunxi_lcdc_tcon0_mode_set(const struct ctfb_res_modes *mode,
 		     sunxi_is_composite());
 
 	sunxi_ctfb_mode_to_display_timing(mode, &timing);
+#ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
+	lcdc_tcon0_mode_set(lcdc, &timing, clk_div, for_ext_vga_dac,
+			    sunxi_display.depth, lcd_olinuxino_dclk_phase());
+#else
 	lcdc_tcon0_mode_set(lcdc, &timing, clk_div, for_ext_vga_dac,
 			    sunxi_display.depth, CONFIG_VIDEO_LCD_DCLK_PHASE);
+#endif
 }
 
 #if defined CONFIG_VIDEO_HDMI || defined CONFIG_VIDEO_VGA || defined CONFIG_VIDEO_COMPOSITE
@@ -1038,9 +1076,14 @@ static bool sunxi_has_hdmi(void)
 
 static bool sunxi_has_lcd(void)
 {
+
+#ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
+	return lcd_olinuxino_is_present();
+#else
 	char *lcd_mode = CONFIG_VIDEO_LCD_MODE;
 
 	return lcd_mode[0] != 0;
+#endif
 }
 
 static bool sunxi_has_vga(void)
@@ -1087,7 +1130,12 @@ void *video_hw_init(void)
 	int i, overscan_offset, overscan_x, overscan_y;
 	unsigned int fb_dma_addr;
 	char mon[16];
+#ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
+	char *lcd_mode = lcd_olinuxino_video_mode();
+#else
 	char *lcd_mode = CONFIG_VIDEO_LCD_MODE;
+#endif
+
 
 	memset(&sunxi_display, 0, sizeof(struct sunxi_display));
 
@@ -1119,6 +1167,7 @@ void *video_hw_init(void)
 	    sunxi_display.monitor == sunxi_monitor_hdmi) {
 		/* Always call hdp_detect, as it also enables clocks, etc. */
 		ret = sunxi_hdmi_hpd_detect(hpd_delay);
+		env_set("monitor", "hdmi");
 		if (ret) {
 			printf("HDMI connected: ");
 			if (edid && sunxi_hdmi_edid_get_mode(&custom) == 0)
@@ -1126,10 +1175,10 @@ void *video_hw_init(void)
 		} else if (hpd) {
 			sunxi_hdmi_shutdown();
 			sunxi_display.monitor = sunxi_get_default_mon(false);
+			env_set("monitor", "none");
 		} /* else continue with hdmi/dvi without a cable connected */
 	}
 #endif
-
 	switch (sunxi_display.monitor) {
 	case sunxi_monitor_none:
 		return NULL;
@@ -1149,6 +1198,7 @@ void *video_hw_init(void)
 		}
 		sunxi_display.depth = video_get_params(&custom, lcd_mode);
 		mode = &custom;
+		env_set("monitor", "lcd");
 		break;
 	case sunxi_monitor_vga:
 		if (!sunxi_has_vga()) {

@@ -10,6 +10,7 @@ obj-y	+= board_detect.o
 ifndef CONFIG_SPL_BUILD
 obj-y	+= boards.o
 obj-y	+= cmd_olinuxino.o
+obj-$(CONFIG_VIDEO_LCD_PANEL_OLINUXINO)	+= lcd_olinuxino.o
 obj-$(CONFIG_OF_LIBFDT)		+= fdt.o
 endif
 

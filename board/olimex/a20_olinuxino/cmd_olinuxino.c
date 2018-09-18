@@ -233,4 +233,5 @@ U_BOOT_CMD(
 	"					aa:bb:cc:dd:ee:ff\n"
 	"					FF:FF:FF:FF:FF:FF\n"
 	"					aabbccddeeff\n"
+	"olinuxino lcd list		- Print supported LCD panels\n"
 	);

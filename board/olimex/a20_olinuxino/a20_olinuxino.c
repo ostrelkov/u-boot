@@ -113,6 +113,12 @@ void i2c_init_board(void)
 	sunxi_gpio_set_cfgpin(SUNXI_GPB(19), SUN4I_GPB_TWI1);
 	clock_twi_onoff(1, 1);
 #endif
+
+#if defined(CONFIG_I2C2_ENABLE) && !defined(CONFIG_SPL_BUILD)
+	sunxi_gpio_set_cfgpin(SUNXI_GPB(20), SUN4I_GPB_TWI2);
+	sunxi_gpio_set_cfgpin(SUNXI_GPB(21), SUN4I_GPB_TWI2);
+	clock_twi_onoff(2, 1);
+#endif
 }
 
 #if defined(CONFIG_ENV_IS_IN_SPI_FLASH) || defined(CONFIG_ENV_IS_IN_FAT) || defined(CONFIG_ENV_IS_IN_EXT4)
