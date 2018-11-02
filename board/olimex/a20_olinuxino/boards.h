@@ -54,6 +54,8 @@ const char *olimex_get_board_name(uint32_t id);
 const char *olimex_get_board_fdt(uint32_t id);
 const char *olimex_get_lcd_pwm_pin(uint32_t id);
 const char *olimex_get_lcd_pwr_pin(uint32_t id);
+const char *olimex_get_lcd_irq_pin(uint32_t id);
+const char *olimex_get_lcd_rst_pin(uint32_t id);
 
 
 bool olimex_board_is_lime(uint32_t id);

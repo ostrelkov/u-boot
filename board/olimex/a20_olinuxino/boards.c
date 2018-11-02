@@ -307,3 +307,28 @@ const char * olimex_get_lcd_pwm_pin(uint32_t id)
 {
 	return "PB2";
 }
+
+const char *olimex_get_lcd_irq_pin(uint32_t id)
+{
+	if (olimex_board_is_som204_evb(id))
+		return "PH2";
+	else if (olimex_board_is_som_evb(id))
+		return NULL;			// Not yes supported
+	else if (olimex_board_is_lime2(id))
+		return "PH10";
+	else
+		return "PH12";
+}
+
+const char *olimex_get_lcd_rst_pin(uint32_t id)
+{
+	if (olimex_board_is_som204_evb(id))
+		return "PI1";
+	else if (olimex_board_is_som_evb(id))
+		return NULL;			// Not yes supported
+	else if (olimex_board_is_lime2(id))
+		return "PH11";
+	else
+		return "PB13";
+
+}

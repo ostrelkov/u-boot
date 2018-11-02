@@ -7,13 +7,13 @@
  * SPDX-License-Identifier: (GPL-2.0+ OR MIT)
  */
 
-#define DEBUG
 #include <common.h>
 #include <linux/libfdt.h>
 #include <linux/sizes.h>
 #include <fdt_support.h>
-#include <jffs2/load_kernel.h>
 #include <mtd_node.h>
+#include <jffs2/load_kernel.h>
+#include <asm/arch/gpio.h>
 
 #include "lcd_olinuxino.h"
 #include "board_detect.h"
@@ -31,6 +31,7 @@ enum devices {
 	PATH_SPI0,
 	PATH_PWM,
 	PATH_TCON0,
+	PATH_RTP,
 };
 
 #define FDT_PATH(__name, __addr) \
@@ -48,6 +49,7 @@ struct __path {
 	FDT_PATH("spi",			0x01c05000),
 	FDT_PATH("pwm",			0x01c20e00),
 	FDT_PATH("lcd-controller",	0x01c0c000),
+	FDT_PATH("rtp",			0x01c25000),
 };
 
 #define NAND_PART(__label, __start, __lenght) \
@@ -449,6 +451,7 @@ static int board_fix_nand(void *blob)
 	return 0;
 }
 
+#ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
 static int board_fix_lcd_olinuxino(void *blob)
 {
 	uint32_t power_supply_phandle;
@@ -466,6 +469,8 @@ static int board_fix_lcd_olinuxino(void *blob)
 	char pin[5];
 	int offset;
 	int ret = 0;
+	int gpio;
+	char *s = env_get("lcd_olinuxino");
 	int i;
 
 	debug("Enabling LCD-OLinuXino...\n");
@@ -644,16 +649,26 @@ static int board_fix_lcd_olinuxino(void *blob)
 	 * };
 	 */
 
-	offset = get_path_offset(blob, PATH_I2C2, path);
-  	if (offset < 0)
-  		return offset;
+	if (!s) {
+		offset = get_path_offset(blob, PATH_I2C2, path);
+	  	if (offset < 0)
+	  		return offset;
 
-	offset = fdt_add_subnode(blob, offset, "panel@50");
-	if (offset < 0)
-		return offset;
+		offset = fdt_add_subnode(blob, offset, "panel@50");
+		if (offset < 0)
+			return offset;
+	} else {
+		path[0] = 0;
+		offset = fdt_path_offset(blob, FDT_PATH_ROOT);
+		if (offset < 0)
+			return offset;
 
+		offset = fdt_add_subnode(blob, offset, "panel@0");
+		if (offset < 0)
+			return offset;
+	}
 
-	ret = fdt_setprop_string(blob, offset, "compatible", "olimex,lcd-olinuxino");
+	ret = fdt_setprop_string(blob, offset, "compatible", lcd_olinuxino_compatible());
 	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 1);
 	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 0);
 	ret |= fdt_setprop_u32(blob, offset, "reg", 0x50);
@@ -742,7 +757,11 @@ static int board_fix_lcd_olinuxino(void *blob)
 	if (!tcon0_endpoint_phandle)
 		return -1;
 
-	strcat(path, "/panel@50/port@0/endpoint@0");
+	if (!s)
+		strcat(path, "/panel@50/port@0/endpoint@0");
+	else
+		strcat(path, "/panel@0/port@0/endpoint@0");
+
 	offset = fdt_path_offset(blob, path);
 	if (offset < 0)
 		return offset;
@@ -753,9 +772,10 @@ static int board_fix_lcd_olinuxino(void *blob)
 
 
 	/* Enable TS */
-	switch (lcd_olinuxino_eeprom.id) {
-	case 9278:
-	case 9284:
+	if (lcd_olinuxino_eeprom.id == 9278 ||	/* LCD-OLinuXino-7CTS */
+	    lcd_olinuxino_eeprom.id == 9284 ||	/* LCD-OLinuXino-10CTS */
+	    (s && !strcmp(s, "LCD-OLinuXino-5"))) {
+
 		offset = get_path_offset(blob, PATH_I2C2, path);
 		if (offset < 0)
 			return offset;
@@ -768,36 +788,40 @@ static int board_fix_lcd_olinuxino(void *blob)
 		ret |= fdt_setprop_u32(blob, offset, "reg", 0x14);
 		ret |= fdt_setprop_u32(blob, offset, "interrupt-parent", pinctrl_phandle);
 
-		/* TODO: Check interrupt pin on different boards */
-		irq[0] = cpu_to_fdt32(7);
-		irq[1] = cpu_to_fdt32(12);
+		gpio = sunxi_name_to_gpio(olimex_get_lcd_irq_pin(eeprom->id));
+		irq[0] = cpu_to_fdt32(gpio >> 5);
+		irq[1] = cpu_to_fdt32(gpio & 0x1F);
 		irq[2] = cpu_to_fdt32(2);
 		ret |= fdt_setprop(blob, offset, "interrupts", irq, sizeof(irq));
 
 		gpios[0] = cpu_to_fdt32(pinctrl_phandle);
-		gpios[1] = cpu_to_fdt32(7);
-		gpios[2] = cpu_to_fdt32(12);
+		gpios[1] = cpu_to_fdt32(gpio >> 5);
+		gpios[2] = cpu_to_fdt32(gpio & 0x1F);
 		gpios[3] = cpu_to_fdt32(0);
 		ret |= fdt_setprop(blob, offset, "irq-gpios", gpios, sizeof(gpios));
 
+		gpio = sunxi_name_to_gpio(olimex_get_lcd_rst_pin(eeprom->id));
 		gpios[0] = cpu_to_fdt32(pinctrl_phandle);
-		gpios[1] = cpu_to_fdt32(1);
-		gpios[2] = cpu_to_fdt32(13);
+		gpios[1] = cpu_to_fdt32(gpio >> 5);
+		gpios[2] = cpu_to_fdt32(gpio & 0x1F);
 		gpios[3] = cpu_to_fdt32(0);
 		ret |= fdt_setprop(blob, offset, "reset-gpios", gpios, sizeof(gpios));
 
 		if (lcd_olinuxino_eeprom.id == 9278)
 			ret |= fdt_setprop_empty(blob, offset, "touchscreen-swapped-x-y");
 
-		if (ret < 0)
-			return ret;
-		break;
-	default:
-		break;
+	} else {
+		/* Enable SUN4I-TS */
+		offset = get_path_offset(blob, PATH_RTP, NULL);
+		if (offset < 0)
+			return offset;
+
+		ret = fdt_setprop_empty(blob, offset, "allwinner,ts-attached");
 	}
 
-	return 0;
+	return ret;
 }
+#endif
 
 static int (*olinuxino_fixes[]) (void *blob) = {
 	board_fix_spi_flash,
@@ -836,7 +860,6 @@ int board_fix_fdt(void *blob)
 #if defined(CONFIG_OF_SYSTEM_SETUP)
 int ft_system_setup(void *blob, bd_t *bd)
 {
-	char *s;
 	int ret;
 #ifdef CONFIG_FDT_FIXUP_PARTITIONS
 	static struct node_info nodes[] = {
@@ -847,13 +870,15 @@ int ft_system_setup(void *blob, bd_t *bd)
 	if (ret < 0)
 		return ret;
 
+#ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
 	/* Check if lcd is the default monitor */
-	s = env_get("monitor");
+	char *s = env_get("monitor");
 	if (s != NULL && !strncmp(s, "lcd", 3)) {
 		ret = board_fix_lcd_olinuxino(blob);
 		if (ret < 0)
 			return ret;
 		}
+#endif
 
 #ifdef CONFIG_FDT_FIXUP_PARTITIONS
 	fdt_fixup_mtdparts(blob, nodes, ARRAY_SIZE(nodes));

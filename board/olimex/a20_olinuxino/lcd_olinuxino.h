@@ -40,6 +40,11 @@ struct lcd_olinuxino_info {
 	u32 bus_flag;
 } __attribute__((__packed__));
 
+struct lcd_olinuxino_board {
+	struct lcd_olinuxino_info info;
+	struct lcd_olinuxino_mode mode;
+};
+
 struct lcd_olinuxino_eeprom {
 	u32 header;
 	u32 id;
@@ -52,10 +57,12 @@ struct lcd_olinuxino_eeprom {
 } __attribute__((__packed__));
 
 extern struct lcd_olinuxino_eeprom lcd_olinuxino_eeprom;
+extern struct lcd_olinuxino_board lcd_olinuxino_boards[];
 
 bool lcd_olinuxino_is_present(void);
 
-char *lcd_olinuxino_video_mode(void);
+char * lcd_olinuxino_video_mode(void);
 uint8_t lcd_olinuxino_dclk_phase(void);
+char * lcd_olinuxino_compatible(void);
 
 #endif /* __LCD_OLINUXINO_H */

@@ -12,6 +12,94 @@
 #include "lcd_olinuxino.h"
 #include "board_detect.h"
 
+struct lcd_olinuxino_board lcd_olinuxino_boards[] = {
+	{
+		{
+			.name = "LCD-OLinuXino-4.3TS",
+			.bus_format = MEDIA_BUS_FMT_RGB888_1X24,
+		},
+		{
+			.pixelclock = 12000,
+			.hactive = 480,
+			.hfp = 8,
+			.hbp = 23,
+			.hpw = 20,
+			.vactive = 272,
+			.vfp = 4,
+			.vbp = 13,
+			.vpw = 10,
+			.refresh = 60,
+			.flags = 0
+		}
+
+	},
+	{
+		{
+			.name = "LCD-OLinuXino-5",
+			.bus_format = MEDIA_BUS_FMT_RGB888_1X24,
+		},
+		{
+			.pixelclock = 33000,
+			.hactive = 800,
+			.hfp = 210,
+			.hbp = 26,
+			.hpw = 20,
+			.vactive = 480,
+			.vfp = 22,
+			.vbp = 13,
+			.vpw = 10,
+			.refresh = 60,
+			.flags = 0
+		}
+
+	},
+	{
+		{
+			.name = "LCD-OLinuXino-7",
+			.bus_format = MEDIA_BUS_FMT_RGB888_1X24,
+		},
+		{
+			.pixelclock = 33000,
+			.hactive = 800,
+			.hfp = 210,
+			.hbp = 26,
+			.hpw = 20,
+			.vactive = 480,
+			.vfp = 22,
+			.vbp = 13,
+			.vpw = 10,
+			.refresh = 60,
+			.flags = 0
+		}
+
+	},
+	{
+		{
+			.name = "LCD-OLinuXino-10",
+			.bus_format = MEDIA_BUS_FMT_RGB888_1X24,
+		},
+		{
+			.pixelclock = 51000,
+			.hactive = 1024,
+			.hfp = 154,
+			.hbp = 150,
+			.hpw = 10,
+			.vactive = 600,
+			.vfp = 12,
+			.vbp = 21,
+			.vpw = 2,
+			.refresh = 60,
+			.flags = 0
+		}
+
+	},
+	{
+		{
+			.name = "",
+		},
+	},
+};
+
 struct lcd_olinuxino_eeprom lcd_olinuxino_eeprom;
 char videomode[128];
 
@@ -63,23 +151,40 @@ static int lcd_olinuxino_eeprom_read(void)
 	return 0;
 }
 
-char *lcd_olinuxino_video_mode()
+char * lcd_olinuxino_video_mode()
 {
-	struct lcd_olinuxino_mode *mode;
-	struct lcd_olinuxino_info *info;
+	struct lcd_olinuxino_board *lcd = lcd_olinuxino_boards;
+	struct lcd_olinuxino_mode *mode = NULL;
+	struct lcd_olinuxino_info *info = NULL;
+	char *s;
 	int ret;
 
-	ret = lcd_olinuxino_eeprom_read();
-	if (ret)
-		return "";
+	/*
+	 * Check if lcd_olinuxino is specify.
+	 */
+	s = env_get("lcd_olinuxino");
+	while (strlen(lcd->info.name)) {
+		if (!strcmp(lcd->info.name, s)) {
+			info = &lcd->info;
+			mode = &lcd->mode;
+			break;
+		}
+		lcd++;
+	}
 
-	mode = (struct lcd_olinuxino_mode *)&lcd_olinuxino_eeprom.reserved;
-	info = &lcd_olinuxino_eeprom.info;
+	if (mode == NULL || info == NULL) {
+		ret = lcd_olinuxino_eeprom_read();
+		if (ret)
+			return "";
 
-	printf("Detected %s, Rev.%s, Serial:%08x\n",
-	       lcd_olinuxino_eeprom.info.name,
-	       lcd_olinuxino_eeprom.revision,
-	       lcd_olinuxino_eeprom.serial);
+		printf("Detected %s, Rev.%s, Serial:%08x\n",
+		       lcd_olinuxino_eeprom.info.name,
+		       lcd_olinuxino_eeprom.revision,
+		       lcd_olinuxino_eeprom.serial);
+
+		mode = (struct lcd_olinuxino_mode *)&lcd_olinuxino_eeprom.reserved;
+		info = &lcd_olinuxino_eeprom.info;
+	}
 
 	sprintf(videomode, "x:%d,y:%d,depth:%d,pclk_khz:%d,le:%d,ri:%d,up:%d,lo:%d,hs:%d,vs:%d,sync:3,vmode:0",
 		mode->hactive,
@@ -99,7 +204,32 @@ char *lcd_olinuxino_video_mode()
 
 bool lcd_olinuxino_is_present()
 {
-	return (lcd_olinuxino_eeprom.header == LCD_OLINUXINO_HEADER_MAGIC);
+	char *s = env_get("lcd_olinuxino");
+
+	if (!s)
+		return (lcd_olinuxino_eeprom.header == LCD_OLINUXINO_HEADER_MAGIC);
+	else
+		return true;
+}
+
+char * lcd_olinuxino_compatible()
+{
+	char *s = env_get("lcd_olinuxino");
+
+	if (!s)
+		return "olimex,lcd-olinuxino";
+
+	if (!strcmp(s, "LCD-OLinuXino-4.3TS"))
+		return "olimex,lcd-olinuxino-43";
+	else if (!strcmp(s, "LCD-OLinuXino-5"))
+		return "olimex,lcd-olinuxino-5";
+	else if (!strcmp(s, "LCD-OLinuXino-7"))
+		return "olimex,lcd-olinuxino-7";
+	else if (!strcmp(s, "LCD-OLinuXino-10"))
+		return "olimex,lcd-olinuxino-10";
+
+
+	return "olimex,lcd-olinuxino";
 }
 
 uint8_t lcd_olinuxino_dclk_phase()
