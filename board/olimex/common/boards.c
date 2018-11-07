@@ -5,10 +5,12 @@
  * SPDX-License-Identifier: (GPL-2.0+ OR MIT)
  */
 #include <common.h>
+#include "board_detect.h"
 #include "boards.h"
 
 #ifndef CONFIG_SPL_BUILD
 struct olinuxino_boards olinuxino_boards[] = {
+#if defined(CONFIG_TARGET_A20_OLINUXINO)
 	/* A20-OLinuXino-Lime */
 	{
 		OLINUXINO_BOARD(7739, "A20-OLinuXino-LIME", "sun7i-a20-olinuxino-lime.dtb")
@@ -170,7 +172,7 @@ struct olinuxino_boards olinuxino_boards[] = {
 		OLINUXINO_BOARD(8958, "A20-SOM204-1Gs16Me16G-MC", "sun7i-a20-olimex-som204-evb-emmc.dtb")
 		OLINUXINO_CONFIG(EMMC, GBYTES(16), GBYTES(1), COM)
 	},
-
+#endif
 	/* END */
 	{
 		.id = 0
@@ -178,35 +180,44 @@ struct olinuxino_boards olinuxino_boards[] = {
 };
 
 
-const char *olimex_get_board_name(uint32_t id)
+const char *olimex_get_board_name()
 {
+#if defined(CONFIG_TARGET_A20_OLINUXINO)
 	struct olinuxino_boards *board = olinuxino_boards;
 
 	while (board->id) {
-		if (id == board->id)
+		if (eeprom->id == board->id)
 			return board->name;
 		board++;
 	}
 	return "";
+#elif defined(CONFIG_TARGET_A33_OLINUXINO)
+	return "A33-OLinuXino-n8GB";
+#endif
 }
 
-const char *olimex_get_board_fdt(uint32_t id)
+const char *olimex_get_board_fdt()
 {
+#if defined(CONFIG_TARGET_A20_OLINUXINO)
 	struct olinuxino_boards *board = olinuxino_boards;
 
 	while (board->id) {
-		if (id == board->id)
+		if (eeprom->id == board->id)
 			return board->fdt;
 		board++;
 	}
 	return "";
+#elif defined(CONFIG_TARGET_A33_OLINUXINO)
+	return "sun8i-a33-olinuxino.dtb";
+#endif
 }
 
 #endif
 
-bool olimex_board_is_micro(uint32_t id)
+#ifdef CONFIG_TARGET_A20_OLINUXINO
+bool olimex_board_is_micro()
 {
-	switch (id) {
+	switch (eeprom->id) {
 		case 4614:
 		case 8832:
 		case 9042:
@@ -226,9 +237,9 @@ bool olimex_board_is_micro(uint32_t id)
 	}
 }
 
-bool olimex_board_is_lime(uint32_t id)
+bool olimex_board_is_lime()
 {
-	switch (id) {
+	switch (eeprom->id) {
 		case 7739:
 		case 7743:
 		case 8934:
@@ -244,9 +255,9 @@ bool olimex_board_is_lime(uint32_t id)
 	}
 }
 
-bool olimex_board_is_lime2(uint32_t id)
+bool olimex_board_is_lime2()
 {
-	switch (id) {
+	switch (eeprom->id) {
 		case 7701:
 		case 8340:
 		case 9166:
@@ -264,9 +275,9 @@ bool olimex_board_is_lime2(uint32_t id)
 	}
 }
 
-bool olimex_board_is_som_evb(uint32_t id)
+bool olimex_board_is_som_evb()
 {
-	switch (id) {
+	switch (eeprom->id) {
 		case 4673:
 		case 7664:
 		case 8849:
@@ -281,9 +292,9 @@ bool olimex_board_is_som_evb(uint32_t id)
 			return false;
 	}
 }
-bool olimex_board_is_som204_evb(uint32_t id)
+bool olimex_board_is_som204_evb()
 {
-	switch (id) {
+	switch (eeprom->id) {
 		case 8991:
 		case 8958:
 			return true;
@@ -292,43 +303,100 @@ bool olimex_board_is_som204_evb(uint32_t id)
 			return false;
 	}
 }
+#endif
 
-const char * olimex_get_lcd_pwr_pin(uint32_t id)
+const char * olimex_get_lcd_pwr_pin()
 {
-	if (olimex_board_is_som_evb(id))
+#if defined(CONFIG_TARGET_A20_OLINUXINO)
+	if (olimex_board_is_som_evb())
 		return "PH7";
-	else if (olimex_board_is_som204_evb(id))
+	else if (olimex_board_is_som204_evb())
 		return "PC24";
 	else
 		return "PH8";
+#elif defined(CONFIG_TARGET_A33_OLINUXINO)
+		return "PB2";
+#endif
 }
 
-const char * olimex_get_lcd_pwm_pin(uint32_t id)
+const char * olimex_get_lcd_pwm_pin()
 {
+#if defined(CONFIG_TARGET_A20_OLINUXINO)
 	return "PB2";
+#elif defined(CONFIG_TARGET_A33_OLINUXINO)
+	return "PH0";
+#endif
 }
 
-const char *olimex_get_lcd_irq_pin(uint32_t id)
+const char *olimex_get_lcd_irq_pin()
 {
-	if (olimex_board_is_som204_evb(id))
+#if defined(CONFIG_TARGET_A20_OLINUXINO)
+	if (olimex_board_is_som204_evb())
 		return "PH2";
-	else if (olimex_board_is_som_evb(id))
+	else if (olimex_board_is_som_evb())
 		return NULL;			// Not yes supported
-	else if (olimex_board_is_lime2(id))
+	else if (olimex_board_is_lime2())
 		return "PH10";
 	else
 		return "PH12";
+#elif defined(CONFIG_TARGET_A33_OLINUXINO)
+	return "PB5";
+#endif
 }
 
-const char *olimex_get_lcd_rst_pin(uint32_t id)
+const char *olimex_get_lcd_rst_pin()
 {
-	if (olimex_board_is_som204_evb(id))
+#if defined(CONFIG_TARGET_A20_OLINUXINO)
+	if (olimex_board_is_som204_evb())
 		return "PI1";
-	else if (olimex_board_is_som_evb(id))
+	else if (olimex_board_is_som_evb())
 		return NULL;			// Not yes supported
-	else if (olimex_board_is_lime2(id))
+	else if (olimex_board_is_lime2())
 		return "PH11";
 	else
 		return "PB13";
+#elif defined(CONFIG_TARGET_A33_OLINUXINO)
+	return "PB6";
+#endif
+}
 
+const char *olimex_get_usb_vbus_pin(uint8_t port)
+{
+	switch (port) {
+#if defined(CONFIG_TARGET_A20_OLINUXINO)
+	case 0:
+		if (olimex_board_is_som204_evb() || olimex_board_is_lime2())
+			return "PC17";
+		else
+			return "PB9";
+	case 1:
+		return "PH6";
+	case 2:
+		return "PH3";
+#elif defined(CONFIG_TARGET_A33_OLINUXINO)
+	case 0:
+		return "AXP0-VBUS-ENABLE";
+#endif
+	default:
+		return NULL;
+	}
+
+}
+
+const char *olimex_get_usb_vbus_det_pin()
+{
+#if defined(CONFIG_TARGET_A20_OLINUXINO)
+	return "PH5";
+#elif defined(CONFIG_TARGET_A33_OLINUXINO)
+	return "AXP0-VBUS-DETECT";
+#endif
+}
+
+const char *olimex_get_usb_id_pin()
+{
+#if defined(CONFIG_TARGET_A20_OLINUXINO)
+	return "PH4";
+#elif defined(CONFIG_TARGET_A33_OLINUXINO)
+	return "PB3";
+#endif
 }

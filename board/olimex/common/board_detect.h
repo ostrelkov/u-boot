@@ -40,7 +40,6 @@ struct olimex_eeprom {
 	uint32_t crc;
 } __attribute__ ((__packed__));
 
-
 /* I2C access functions */
 int olimex_i2c_eeprom_read(void);
 int olimex_i2c_eeprom_write(void);

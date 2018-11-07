@@ -5,24 +5,11 @@
  *
  * SPDX-License-Identifier: (GPL-2.0+ OR MIT)
  */
-#ifndef __A20_OLINUXINO_CONFIG_H
-#define __A20_OLINUXINO_CONFIG_H
+#ifndef __A33_OLINUXINO_CONFIG_H
+#define __A33_OLINUXINO_CONFIG_H
 
 #include <asm/arch/cpu.h>
 #include <linux/stringify.h>
-
-/*
- * A20 specific configuration
- */
-#ifdef CONFIG_USB_EHCI_HCD
-#define CONFIG_USB_EHCI_SUNXI
-#endif
-
-#define CONFIG_SUNXI_USB_PHYS   3
-
-#define CONFIG_ARMV7_SECURE_BASE        SUNXI_SRAM_B_BASE
-#define CONFIG_ARMV7_SECURE_MAX_SIZE    (64 * 1024) /* 64 KB */
-
 
 #ifdef CONFIG_OLD_SUNXI_KERNEL_COMPAT
 /*
@@ -91,36 +78,14 @@
 #define PHYS_SDRAM_0			CONFIG_SYS_SDRAM_BASE
 #define PHYS_SDRAM_0_SIZE		0x80000000 /* 2 GiB */
 
-#ifdef CONFIG_AHCI
-#define CONFIG_SCSI_AHCI_PLAT
-#define CONFIG_SUNXI_AHCI
-#define CONFIG_SYS_64BIT_LBA
-#define CONFIG_SYS_SCSI_MAX_SCSI_ID	1
-#define CONFIG_SYS_SCSI_MAX_LUN		1
-#define CONFIG_SYS_SCSI_MAX_DEVICE	(CONFIG_SYS_SCSI_MAX_SCSI_ID * \
-					 CONFIG_SYS_SCSI_MAX_LUN)
-#endif
-
 #define CONFIG_SETUP_MEMORY_TAGS
 #define CONFIG_CMDLINE_TAG
 #define CONFIG_INITRD_TAG
 #define CONFIG_SERIAL_TAG
 
-#ifdef CONFIG_SPL_SPI_SUNXI
-#define CONFIG_SYS_SPI_U_BOOT_OFFS	0x8000
-#endif
-
-#if defined(CONFIG_ENV_IS_IN_SPI_FLASH)
-#define CONFIG_ENV_OFFSET_REDUND	( CONFIG_ENV_OFFSET + CONFIG_ENV_SIZE)
-#define CONFIG_ENV_SIZE_REDUND		CONFIG_ENV_SIZE
-#define CONFIG_SYS_REDUNDAND_ENVIRONMENT
-#endif
-
 #if defined(CONFIG_ENV_IS_IN_MMC)
 #define CONFIG_SYS_MMC_ENV_DEV		0
 #define CONFIG_SYS_MMC_MAX_DEVICE	4
-#elif defined(CONFIG_ENV_IS_IN_SPI_FLASH)
-#define CONFIG_ENV_SECT_SIZE		(128 << 10)
 #elif defined(CONFIG_ENV_IS_NOWHERE)
 #define CONFIG_ENV_SIZE			(128 << 10)
 #endif
@@ -166,7 +131,7 @@
 
 #define CONFIG_SYS_SPD_BUS_NUM		0 /* The axp209 i2c bus is bus 0 */
 #define CONFIG_VIDEO_LCD_I2C_BUS	-1 /* NA, but necessary to compile */
-#define LCD_OLINUXINO_EEPROM_BUS	I2C_2
+#define LCD_OLINUXINO_EEPROM_BUS	I2C_0
 
 #ifdef CONFIG_REQUIRE_SERIAL_CONSOLE
 #define OF_STDOUT_PATH		"/soc@01c00000/serial@01c28000:115200"
@@ -191,9 +156,6 @@
 /* stop x86 thinking in cfbconsole from trying to init a pc keyboard */
 
 #endif /* CONFIG_VIDEO_SUNXI */
-
-/* Ethernet support */
-#define CONFIG_MII			/* MII PHY management		*/
 
 #ifdef CONFIG_USB_EHCI_HCD
 #define CONFIG_USB_OHCI_NEW
@@ -265,10 +227,8 @@
 
 #ifdef CONFIG_DFU_MMC
 #define DFU_ALT_INFO_MMC0 ""
-#define DFU_ALT_INFO_MMC2 ""
 #else
 #define DFU_ALT_INFO_MMC0 ""
-#define DFU_ALT_INFO_MMC2 ""
 #endif
 
 #ifdef CONFIG_DFU_NAND
@@ -297,47 +257,15 @@
 #define DFU_ALT_INFO_RAM ""
 #endif
 
-#ifdef CONFIG_DFU_SF
-#define DFU_ALT_INFO_SF \
-	"dfu_alt_info_sf=" \
-		"SPI.u-boot raw 0 0x200000;" \
-		"SPI.u-boot-env raw 0x200000 0x20000;" \
-		"SPI.u-boot-env.backup raw 0x220000 0x20000\0"
-#else
-#define DFU_ALT_INFO_SF ""
-#endif
-
 #define DFU_ALT_INFO \
 	DFU_ALT_INFO_MMC0 \
-	DFU_ALT_INFO_MMC2 \
 	DFU_ALT_INFO_RAM \
-	DFU_ALT_INFO_NAND \
-	DFU_ALT_INFO_SF
+	DFU_ALT_INFO_NAND
 
 #endif /* CONFIG_DFU */
 
-#ifdef CONFIG_SPI_FLASH
-#define SPI_MTDIDS "nor0=flash.0"
-#define SPI_MTDPARTS "mtdparts=flash.0:2m(SPI.u-boot),128k(SPI.u-boot-env),128k(SPI.u-boot-env.backup),-(SPI.user)"
-#endif
-
 #ifdef CONFIG_MMC
-#define BOOTENV_DEV_MMC_AUTO(devtypeu, devtypel, instance)		\
-	BOOTENV_DEV_MMC(MMC, mmc, 0)					\
-	BOOTENV_DEV_MMC(MMC, mmc, 1)					\
-	"bootcmd_mmc_auto="						\
-		"if test ${mmc_bootdev} -eq 1; then "			\
-			"run bootcmd_mmc1; "				\
-			"run bootcmd_mmc0; "				\
-		"elif test ${mmc_bootdev} -eq 0; then "			\
-			"run bootcmd_mmc0; "				\
-			"run bootcmd_mmc1; "				\
-		"fi\0"
-
-#define BOOTENV_DEV_NAME_MMC_AUTO(devtypeu, devtypel, instance) \
-	"mmc_auto "
-
-#define BOOT_TARGET_DEVICES_MMC(func) func(MMC_AUTO, mmc_auto, na)
+#define BOOT_TARGET_DEVICES_MMC(func) func(MMC, mmc, 0)
 #else
 #define BOOT_TARGET_DEVICES_MMC(func)
 #endif

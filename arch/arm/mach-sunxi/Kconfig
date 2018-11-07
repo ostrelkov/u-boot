@@ -290,17 +290,34 @@ if MACH_SUN7I
 choice
 	prompt "SUNXI profile select"
 
-config TARGET_SUNXI_DEFAULT
+config TARGET_SUN7I_DEFAULT
 	bool "Default sunxi target"
 	---help---
 	Use the default profile for sunxi boards
 
 config TARGET_A20_OLINUXINO
-	bool "OLinuXino board"
+	bool "A20-OLinuXino board"
 	select I2C1_ENABLE
 	select SPL_SPI_SUNXI
 	---help---
 	Use board autodetection feature on A20-OLinuXino boards
+
+endchoice
+endif
+
+if MACH_SUN8I_A33
+choice
+	prompt "SUNXI profile select"
+
+config TARGET_SUN8I_A33_DEFAULT
+	bool "Default sunxi target"
+	---help---
+	Use the default profile for sunxi boards
+
+config TARGET_A33_OLINUXINO
+	bool "A33-OLinuXino board"
+	---help---
+	Use A33-OLinuXino board
 
 endchoice
 endif
@@ -518,7 +535,7 @@ config SYS_CLK_FREQ
 	default 1008000000 if MACH_SUN8I
 	default 1008000000 if MACH_SUN9I
 
-if TARGET_SUNXI_DEFAULT
+if TARGET_SUN7I_DEFAULT || TARGET_SUN8I_A33_DEFAULT
 config SYS_CONFIG_NAME
 	default "sun4i" if MACH_SUN4I
 	default "sun5i" if MACH_SUN5I
@@ -534,6 +551,10 @@ endif
 
 if TARGET_A20_OLINUXINO
 	source "board/olimex/a20_olinuxino/Kconfig"
+endif
+
+if TARGET_A33_OLINUXINO
+	source "board/olimex/a33_olinuxino/Kconfig"
 endif
 
 config SYS_SOC
@@ -557,7 +578,7 @@ config OLD_SUNXI_KERNEL_COMPAT
 	Set this to enable various workarounds for old kernels, this results in
 	sub-optimal settings for newer kernels, only enable if needed.
 
-if !TARGET_A20_OLINUXINO
+if !TARGET_A20_OLINUXINO && !TARGET_A33_OLINUXINO
 config MACPWR
 	string "MAC power pin"
 	default ""
@@ -629,7 +650,7 @@ config INITIAL_USB_SCAN_DELAY
 	option to a non 0 value to add an extra delay before the first usb
 	bus scan.
 
-if !TARGET_A20_OLINUXINO
+if !TARGET_A20_OLINUXINO && !TARGET_A33_OLINUXINO
 config USB0_VBUS_PIN
 	string "Vbus enable pin for usb0 (otg)"
 	default ""
@@ -676,6 +697,7 @@ endif
 
 config I2C0_ENABLE
 	bool "Enable I2C/TWI controller 0"
+	default y if VIDEO_LCD_PANEL_OLINUXINO && TARGET_A33_OLINUXINO
 	default y if MACH_SUN4I || MACH_SUN5I || MACH_SUN7I || MACH_SUN8I_R40
 	default n if MACH_SUN6I || MACH_SUN8I
 	select CMD_I2C
@@ -694,6 +716,7 @@ config I2C1_ENABLE
 
 config I2C2_ENABLE
 	bool "Enable I2C/TWI controller 2"
+	default y if VIDEO_LCD_PANEL_OLINUXINO && TARGET_A20_OLINUXINO
 	default n
 	select CMD_I2C
 	---help---
@@ -922,7 +945,6 @@ config VIDEO_LCD_PANEL_LVDS
 config VIDEO_LCD_PANEL_OLINUXINO
 	bool "Olimex LCD-OLinuXino LCD panel"
 	select VIDEO_LCD_IF_PARALLEL
-	select I2C2_ENABLE
 
 config VIDEO_LCD_PANEL_MIPI_4_LANE_513_MBPS_VIA_SSD2828
 	bool "MIPI 4-lane, 513Mbps LCD panel via SSD2828 bridge chip"
@@ -957,7 +979,7 @@ config VIDEO_LCD_TL059WV5C0
 
 endchoice
 
-if !TARGET_A20_OLINUXINO
+if !TARGET_A20_OLINUXINO && !TARGET_A33_OLINUXINO
 config SATAPWR
 	string "SATA power pin"
 	default ""

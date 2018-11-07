@@ -126,24 +126,24 @@ static int lcd_olinuxino_eeprom_read(void)
 	int ret;
 
 	if ((ret = lcd_olinuxino_eeprom_init())) {
-		printf("Error: Failed to init EEPROM!\n");
+		debug("Error: Failed to init EEPROM!\n");
 		return ret;
 	}
 
 	if ((ret = i2c_read(LCD_OLINUXINO_EEPROM_ADDRESS, 0, 1, (uint8_t *)&lcd_olinuxino_eeprom, 256))) {
-		printf("Error: Failed to read EEPROM!\n");
+		debug("Error: Failed to read EEPROM!\n");
 		return ret;
 	}
 
 	if (lcd_olinuxino_eeprom.header != LCD_OLINUXINO_HEADER_MAGIC) {
-		printf("Error: EEPROM magic header is not valid!\n");
+		debug("Error: EEPROM magic header is not valid!\n");
 		memset(&lcd_olinuxino_eeprom, 0xFF, 256);
 		return 1;
 	}
 
 	crc = crc32(0L, (uint8_t *)&lcd_olinuxino_eeprom, 252);
 	if (lcd_olinuxino_eeprom.checksum != crc) {
-		printf("Error: CRC checksum is not valid!\n");
+		debug("Error: CRC checksum is not valid!\n");
 		memset(&lcd_olinuxino_eeprom, 0xFF, 256);
 		return 1;
 	}

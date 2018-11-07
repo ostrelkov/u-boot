@@ -1,5 +1,5 @@
 /*
- * Device Tree fixup for olinuxino
+ * Device Tree fixup for A20-OLinuXino
  *
  * Copyright (C) 2018 Olimex Ltd.
  *   Author: Stefan Mavrodiev <stefan@olimex.com>
@@ -15,9 +15,9 @@
 #include <jffs2/load_kernel.h>
 #include <asm/arch/gpio.h>
 
-#include "lcd_olinuxino.h"
-#include "board_detect.h"
-#include "boards.h"
+#include "../common/lcd_olinuxino.h"
+#include "../common/board_detect.h"
+#include "../common/boards.h"
 
 #define FDT_PATH_ROOT		"/"
 #define FDT_PATH_ALIASES	"/aliases"
@@ -319,7 +319,7 @@ static int board_fix_nand(void *blob)
 	ret |= fdt_appendprop_string(blob, offset, "pins", "PC16");
  	if (ret < 0)
  		return ret;
-
+#
 	/**
 	 * Find /soc@01c00000/nand@01c03000
 	 *
@@ -449,6 +449,33 @@ static int board_fix_nand(void *blob)
 	}
 
 	return 0;
+}
+
+static int (*olinuxino_fixes[]) (void *blob) = {
+	board_fix_spi_flash,
+	board_fix_atecc508a,
+	board_fix_nand,
+};
+
+int olinuxino_fdt_fixup(void *blob)
+{
+	uint8_t i;
+	int ret;
+
+	debug("Address of FDT blob: %p\n", (uint32_t *)blob);
+
+	ret = fdt_increase_size(blob, 65535);
+	if (ret < 0)
+		return ret;
+
+	/* Apply fixes */
+	for (i = 0; i < ARRAY_SIZE(olinuxino_fixes); i++) {
+		ret = olinuxino_fixes[i](blob);
+		if (ret < 0)
+			return ret;
+	}
+
+	return ret;
 }
 
 #ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
@@ -671,13 +698,14 @@ static int board_fix_lcd_olinuxino(void *blob)
 	ret = fdt_setprop_string(blob, offset, "compatible", lcd_olinuxino_compatible());
 	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 1);
 	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 0);
-	ret |= fdt_setprop_u32(blob, offset, "reg", 0x50);
+	if (!s)
+		ret |= fdt_setprop_u32(blob, offset, "reg", 0x50);
 	ret |= fdt_setprop_string(blob, offset, "pinctrl-names", "default");
 	ret |= fdt_setprop_u32(blob, offset, "pinctrl-0", pins_phandle);
 	ret |= fdt_setprop_u32(blob, offset, "power-supply", power_supply_phandle);
 	ret |= fdt_setprop_u32(blob, offset, "backlight", backlight_phandle);
 
-	strcpy(pin, olimex_get_lcd_pwr_pin(eeprom->id));
+	strcpy(pin, olimex_get_lcd_pwr_pin());
 
 	gpios[0] = cpu_to_fdt32(pinctrl_phandle);
 	gpios[1] = cpu_to_fdt32(pin[1] - 'A');
@@ -788,7 +816,7 @@ static int board_fix_lcd_olinuxino(void *blob)
 		ret |= fdt_setprop_u32(blob, offset, "reg", 0x14);
 		ret |= fdt_setprop_u32(blob, offset, "interrupt-parent", pinctrl_phandle);
 
-		gpio = sunxi_name_to_gpio(olimex_get_lcd_irq_pin(eeprom->id));
+		gpio = sunxi_name_to_gpio(olimex_get_lcd_irq_pin());
 		irq[0] = cpu_to_fdt32(gpio >> 5);
 		irq[1] = cpu_to_fdt32(gpio & 0x1F);
 		irq[2] = cpu_to_fdt32(2);
@@ -800,7 +828,7 @@ static int board_fix_lcd_olinuxino(void *blob)
 		gpios[3] = cpu_to_fdt32(0);
 		ret |= fdt_setprop(blob, offset, "irq-gpios", gpios, sizeof(gpios));
 
-		gpio = sunxi_name_to_gpio(olimex_get_lcd_rst_pin(eeprom->id));
+		gpio = sunxi_name_to_gpio(olimex_get_lcd_rst_pin());
 		gpios[0] = cpu_to_fdt32(pinctrl_phandle);
 		gpios[1] = cpu_to_fdt32(gpio >> 5);
 		gpios[2] = cpu_to_fdt32(gpio & 0x1F);
@@ -823,33 +851,6 @@ static int board_fix_lcd_olinuxino(void *blob)
 }
 #endif
 
-static int (*olinuxino_fixes[]) (void *blob) = {
-	board_fix_spi_flash,
-	board_fix_nand,
-	board_fix_atecc508a,
-};
-
-int olinuxino_fdt_fixup(void *blob)
-{
-	uint8_t i;
-	int ret;
-
-	debug("Address of FDT blob: %p\n", (uint32_t *)blob);
-
-	ret = fdt_increase_size(blob, 65535);
-	if (ret < 0)
-		return ret;
-
-	/* Apply fixes */
-	for (i = 0; i < ARRAY_SIZE(olinuxino_fixes); i++) {
-		ret = olinuxino_fixes[i](blob);
-		if (ret < 0)
-			return ret;
-	}
-
-	return ret;
-}
-
 #if defined(CONFIG_OF_BOARD_FIXUP)
 int board_fix_fdt(void *blob)
 {
@@ -860,7 +861,8 @@ int board_fix_fdt(void *blob)
 #if defined(CONFIG_OF_SYSTEM_SETUP)
 int ft_system_setup(void *blob, bd_t *bd)
 {
-	int ret;
+	int ret = 0;
+
 #ifdef CONFIG_FDT_FIXUP_PARTITIONS
 	static struct node_info nodes[] = {
 		{ "fixed-partitions", MTD_DEV_TYPE_NOR, },
@@ -881,7 +883,9 @@ int ft_system_setup(void *blob, bd_t *bd)
 #endif
 
 #ifdef CONFIG_FDT_FIXUP_PARTITIONS
-	fdt_fixup_mtdparts(blob, nodes, ARRAY_SIZE(nodes));
+	if (eeprom->config.storage == 'n')
+		fdt_fixup_mtdparts(blob, nodes, ARRAY_SIZE(nodes));
+
 #endif
 	return ret;
 }

@@ -1,0 +1,12 @@
+if TARGET_A33_OLINUXINO
+
+config SYS_BOARD
+	default "a33_olinuxino"
+
+config SYS_VENDOR
+	default "olimex"
+
+config SYS_CONFIG_NAME
+	default "a33_olinuxino"
+
+endif

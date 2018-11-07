@@ -32,9 +32,9 @@
 #include "simplefb_common.h"
 
 #ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
-#include "../../../board/olimex/a20_olinuxino/boards.h"
-#include "../../../board/olimex/a20_olinuxino/board_detect.h"
-#include "../../../board/olimex/a20_olinuxino/lcd_olinuxino.h"
+#include "../../../board/olimex/common/boards.h"
+#include "../../../board/olimex/common/board_detect.h"
+#include "../../../board/olimex/common/lcd_olinuxino.h"
 #endif
 
 #ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
@@ -572,7 +572,7 @@ static void sunxi_lcdc_panel_enable(void)
 
 
 #ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
-	pin = sunxi_name_to_gpio(olimex_get_lcd_pwm_pin(eeprom->id));
+	pin = sunxi_name_to_gpio(olimex_get_lcd_pwm_pin());
 #else
 	pin = sunxi_name_to_gpio(CONFIG_VIDEO_LCD_BL_PWM);
 #endif
@@ -594,7 +594,7 @@ static void sunxi_lcdc_panel_enable(void)
 	/* Give the backlight some time to turn off and power up the panel. */
 	mdelay(40);
 #ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
-	pin = sunxi_name_to_gpio(olimex_get_lcd_pwr_pin(eeprom->id));
+	pin = sunxi_name_to_gpio(olimex_get_lcd_pwr_pin());
 #else
 	pin = sunxi_name_to_gpio(CONFIG_VIDEO_LCD_POWER);
 #endif
@@ -624,7 +624,7 @@ static void sunxi_lcdc_backlight_enable(void)
 #endif
 
 #ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
-	pin = sunxi_name_to_gpio(olimex_get_lcd_pwm_pin(eeprom->id));
+	pin = sunxi_name_to_gpio(olimex_get_lcd_pwm_pin());
 #else
 	pin = sunxi_name_to_gpio(CONFIG_VIDEO_LCD_BL_PWM);
 #endif

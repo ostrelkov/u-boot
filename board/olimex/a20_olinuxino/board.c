@@ -32,8 +32,8 @@
 #include <asm/io.h>
 #include <linux/ctype.h>
 
-#include "board_detect.h"
-#include "boards.h"
+#include "../common/board_detect.h"
+#include "../common/boards.h"
 
 #define GMAC_MODE_RGMII		0
 #define GMAC_MODE_MII		1
@@ -51,18 +51,18 @@ void eth_init_board(void)
 	if (!olimex_eeprom_is_valid())
 		return;
 
- 	mode = (olimex_board_is_lime(eeprom->id) ||
-		olimex_board_is_micro(eeprom->id)) ?
+ 	mode = (olimex_board_is_lime() ||
+		olimex_board_is_micro()) ?
  		GMAC_MODE_MII : GMAC_MODE_RGMII;
 
-	if (olimex_board_is_lime2(eeprom->id)) {
+	if (olimex_board_is_lime2()) {
 		if (eeprom->revision.major > 'E')
 			/* RTL8211E */
 			tx_delay = 2;
 		else if (eeprom->revision.major > 'G')
 			/* KSZ9031 */
 			tx_delay = 4;
-	} else if (olimex_board_is_som204_evb(eeprom->id)) {
+	} else if (olimex_board_is_som204_evb()) {
 		tx_delay = 4;
 	}
 
@@ -95,7 +95,7 @@ void eth_init_board(void)
 	}
 
 	/* A20-OLinuXino-MICRO needs additional signal for TXERR */
-	if (olimex_board_is_micro(eeprom->id)) {
+	if (olimex_board_is_micro()) {
 		sunxi_gpio_set_cfgpin(SUNXI_GPA(17),  SUN7I_GPA_GMAC);
 	}
 }
@@ -241,7 +241,7 @@ int board_init(void)
 		/*
 		 * Setup SATAPWR
 		 */
-		if(olimex_board_is_micro(eeprom->id))
+		if(olimex_board_is_micro())
 			satapwr_pin = sunxi_name_to_gpio("PB8");
 		else
 			satapwr_pin = sunxi_name_to_gpio("PC3");
@@ -256,7 +256,7 @@ int board_init(void)
 		/*
 		 * A20-SOM204 needs manual reset for rt8723bs chip
 		 */
-		if (olimex_board_is_som204_evb(eeprom->id)) {
+		if (olimex_board_is_som204_evb()) {
 			btpwr_pin = sunxi_name_to_gpio("PB11");
 
 			gpio_request(btpwr_pin, "btpwr");
@@ -399,8 +399,8 @@ int board_early_init_r(void)
 	if (eeprom->config.storage == 'e')
 		mmc_pinmux_setup(2);
 
-	if (olimex_board_is_micro(eeprom->id) ||
-		olimex_board_is_som_evb(eeprom->id))
+	if (olimex_board_is_micro() ||
+		olimex_board_is_som_evb())
 		mmc_pinmux_setup(3);
 #endif
 	return 0;
@@ -552,7 +552,7 @@ static void setup_environment(const void *fdt)
 			env_set_ulong("board_id", eeprom->id);
 
 		if (!env_get("board_name"))
-			env_set("board_name", olimex_get_board_name(eeprom->id));
+			env_set("board_name", olimex_get_board_name());
 
 		if (!env_get("board_rev")) {
 			strrev[0] = (eeprom->revision.major < 'A' || eeprom->revision.major > 'Z') ? 0 : eeprom->revision.major;
@@ -630,7 +630,7 @@ static void setup_environment(const void *fdt)
 	}
 
 	if (!env_get("fdtfile"))
-		env_set("fdtfile", olimex_get_board_fdt(eeprom->id));
+		env_set("fdtfile", olimex_get_board_fdt());
 
 }
 
@@ -711,7 +711,7 @@ int show_board_info(void)
 	}
 
 	/* Get board name and compare if with eeprom content */
-	name = olimex_get_board_name(eeprom->id);
+	name = olimex_get_board_name();
 
 	printf("Model: %s Rev.%c%c", name,
 	       (eeprom->revision.major < 'A' || eeprom->revision.major > 'Z') ?
@@ -743,7 +743,7 @@ int board_fit_config_name_match(const char *name)
 	if (!olimex_eeprom_is_valid())
 		return -1;
 
-	dtb = olimex_get_board_fdt(eeprom->id);
+	dtb = olimex_get_board_fdt();
 	return (!strncmp(name, dtb, strlen(dtb) - 4)) ? 0 : -1;
 }
 #endif /* CONFIG_MULTI_DTB_FIT */

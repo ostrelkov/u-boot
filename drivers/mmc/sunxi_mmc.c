@@ -41,9 +41,14 @@ struct sunxi_mmc_priv mmc_host[4];
 static int sunxi_mmc_getcd_gpio(int sdc_no)
 {
 	switch (sdc_no) {
-#ifdef CONFIG_TARGET_A20_OLINUXINO
+#if defined(CONFIG_TARGET_A20_OLINUXINO)
 	case 0: return sunxi_name_to_gpio("PH1");
-
+	case 1:
+	case 2:
+	case 3:
+		return -1;
+#elif defined(CONFIG_TARGET_A33_OLINUXINO)
+	case 0: return sunxi_name_to_gpio("PB4");
 	case 1:
 	case 2:
 	case 3:

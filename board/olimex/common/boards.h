@@ -50,18 +50,26 @@ struct olinuxino_boards {
 extern struct olinuxino_boards olinuxino_boards[];
 #endif
 
-const char *olimex_get_board_name(uint32_t id);
-const char *olimex_get_board_fdt(uint32_t id);
-const char *olimex_get_lcd_pwm_pin(uint32_t id);
-const char *olimex_get_lcd_pwr_pin(uint32_t id);
-const char *olimex_get_lcd_irq_pin(uint32_t id);
-const char *olimex_get_lcd_rst_pin(uint32_t id);
+const char *olimex_get_board_name(void);
+const char *olimex_get_board_fdt(void);
 
+/* LCD interface pins */
+const char *olimex_get_lcd_pwm_pin(void);
+const char *olimex_get_lcd_pwr_pin(void);
+const char *olimex_get_lcd_irq_pin(void);
+const char *olimex_get_lcd_rst_pin(void);
 
-bool olimex_board_is_lime(uint32_t id);
-bool olimex_board_is_lime2(uint32_t id);
-bool olimex_board_is_micro(uint32_t id);
-bool olimex_board_is_som_evb(uint32_t id);
-bool olimex_board_is_som204_evb(uint32_t id);
+/* USB pins */
+const char *olimex_get_usb_vbus_pin(uint8_t port);
+const char *olimex_get_usb_vbus_det_pin(void);
+const char *olimex_get_usb_id_pin(void);
+
+#if defined(CONFIG_TARGET_A20_OLINUXINO)
+bool olimex_board_is_lime(void);
+bool olimex_board_is_lime2(void);
+bool olimex_board_is_micro(void);
+bool olimex_board_is_som_evb(void);
+bool olimex_board_is_som204_evb(void);
+#endif
 
 #endif /* __BOARDS_H */

@@ -8,6 +8,7 @@
 #include <common.h>
 #include <linux/ctype.h>
 
+#if defined(CONFIG_TARGET_A20_OLINUXINO)
 #include "board_detect.h"
 #include "boards.h"
 
@@ -29,7 +30,7 @@ static int do_config_info(cmd_tbl_t *cmdtp, int flag,
 	}
 
 	/* Get board info */
-	name = olimex_get_board_name(eeprom->id);
+	name = olimex_get_board_name();
 
 	printf("Model: %s Rev.%c%c", name,
 	       (eeprom->revision.major < 'A' || eeprom->revision.major > 'Z') ?
@@ -178,6 +179,7 @@ static cmd_tbl_t cmd_config[] = {
 	U_BOOT_CMD_MKENT(write, 5, 0, do_config_write, "", ""),
 	U_BOOT_CMD_MKENT(erase, 1, 0, do_config_erase, "", ""),
 };
+#endif
 
 static int do_monitor_list(cmd_tbl_t *cmdtp, int flag,
 			   int argc, char *const argv[])
@@ -234,10 +236,12 @@ static int do_olinuxino_opts(cmd_tbl_t *cmdtp, int flag, int argc, char *const a
 {
 	cmd_tbl_t *cp;
 
-	if (!strcmp(argv[0], "config"))
-		cp = find_cmd_tbl(argv[1], cmd_config, ARRAY_SIZE(cmd_config));
-	else if (!strcmp(argv[0], "monitor"))
+	if (!strcmp(argv[0], "monitor"))
 		cp = find_cmd_tbl(argv[1], cmd_monitor, ARRAY_SIZE(cmd_monitor));
+#if defined(CONFIG_TARGET_A20_OLINUXINO)
+	else if (!strcmp(argv[0], "config"))
+		cp = find_cmd_tbl(argv[1], cmd_config, ARRAY_SIZE(cmd_config));
+#endif
 	else
 		return CMD_RET_USAGE;
 
@@ -253,7 +257,9 @@ static int do_olinuxino_opts(cmd_tbl_t *cmdtp, int flag, int argc, char *const a
 }
 
 static cmd_tbl_t cmd_olinuxino[] = {
+#if defined(CONFIG_TARGET_A20_OLINUXINO)
 	U_BOOT_CMD_MKENT(config, CONFIG_SYS_MAXARGS, 0, do_olinuxino_opts, "", ""),
+#endif
 	U_BOOT_CMD_MKENT(monitor, CONFIG_SYS_MAXARGS, 0, do_olinuxino_opts, "", ""),
 };
 
@@ -277,6 +283,7 @@ static int do_olinuxino_ops(cmd_tbl_t *cmdtp, int flag, int argc, char *const ar
 U_BOOT_CMD(
 	olinuxino, 7, 0, do_olinuxino_ops,
 	"OLinuXino board configurator",
+#if defined(CONFIG_TARGET_A20_OLINUXINO)
 	"config info		- Print current configuration: ID, serial, ram, storage, grade...\n"
 	"olinuxino config list		- Print supported boards and their IDs\n"
 	"olinuxino config erase		- Erase currently stored configuration\n"
@@ -291,5 +298,8 @@ U_BOOT_CMD(
 	"					FF:FF:FF:FF:FF:FF\n"
 	"					aabbccddeeff\n"
 	"olinuxino monitor list		- Print supported video outputs\n"
+#else
+	"monitor list		- Print supported video outputs\n"
+#endif
 	"olinuxino monitor set		- Set specific LCD\n"
 	);
