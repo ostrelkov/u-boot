@@ -211,17 +211,8 @@
 #define NAND_MTDPARTS "mtdparts=nand.0:4m(NAND.SPL),4m(NAND.SPL.backup),4m(NAND.u-boot),4m(NAND.u-boot.backup),4m(NAND.u-boot-env),4m(NAND.u-boot-env.backup),4m(NAND.dtb),16m(NAND.kernel),-(NAND.rootfs)"
 
 #define	BOOTENV_DEV_NAND(devtypeu, devtypel, instance) \
-	"update_nand=" \
-		"nand erase.part clean NAND.SPL;" \
-		"nand erase.part clean NAND.SPL.backup;" \
-		"nand erase.part clean NAND.u-boot;" \
-		"nand erase.part clean NAND.u-boot.backup;" \
-		"nand write.raw.noverify 0x50000000 NAND.SPL 40;" \
-		"nand write.raw.noverify 0x50000000 NAND.SPL.backup 40;" \
-		"nand write 0x60000000 NAND.u-boot 0x200000;" \
-		"nand write 0x60000000 NAND.u-boot.backup 0x200000;" \
-		"nand read 0x70000000 NAND.u-boot 0x200000;" \
-		"md.l 0x60000000 10; md.l 0x70000000 10;\0"
+	"bootcmd_nand=" \
+		"\0"
 
 #define BOOTENV_DEV_NAME_NAND(devtypeu, devtypel, instance) \
 		"nand "
