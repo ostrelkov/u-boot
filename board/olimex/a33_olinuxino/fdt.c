@@ -399,17 +399,41 @@ static int board_fix_lcd_olinuxino(void *blob)
  		return ret;
 
 
+	/**
+	 * Touchscreen should be enabled only if AUTODETECT is enabled
+	 * or if LCD-OLinuXino-5 is selected.
+	 */
+	if (s && strcmp(s, "LCD-OLinuXino-5"))
+		return 0;
+
 	/* Enable TS */
 	offset = get_path_offset(blob, PATH_I2C0, path);
 	if (offset < 0)
 		return offset;
 
-	offset = fdt_add_subnode(blob, offset, "gt911@14");
-	if (offset < 0)
-		return offset;
+	/* Make sure I2C0 is enabled */
+	ret = fdt_set_node_status(blob, offset, FDT_STATUS_OKAY, 0);
+	if (ret < 0)
+		return ret;
 
-	ret = fdt_setprop_string(blob, offset, "compatible", "goodix,gt911");
-	ret |= fdt_setprop_u32(blob, offset, "reg", 0x14);
+	if (s) {
+		offset = fdt_add_subnode(blob, offset, "edt-ft5306@38");
+		if (offset < 0)
+			return offset;
+
+		ret = fdt_setprop_string(blob, offset, "compatible", "edt,edt-ft5306");
+		ret |= fdt_setprop_u32(blob, offset, "reg", 0x38);
+		ret |= fdt_setprop_u32(blob, offset, "touchscreen-size-x", 800);
+		ret |= fdt_setprop_u32(blob, offset, "touchscreen-size-y", 480);
+	} else {
+		offset = fdt_add_subnode(blob, offset, "gt911@14");
+		if (offset < 0)
+			return offset;
+
+		ret = fdt_setprop_string(blob, offset, "compatible", "goodix,gt911");
+		ret |= fdt_setprop_u32(blob, offset, "reg", 0x14);
+	}
+
 	ret |= fdt_setprop_u32(blob, offset, "interrupt-parent", pinctrl_phandle);
 
 	gpio = sunxi_name_to_gpio(olimex_get_lcd_irq_pin());
@@ -428,7 +452,7 @@ static int board_fix_lcd_olinuxino(void *blob)
 	gpios[0] = cpu_to_fdt32(pinctrl_phandle);
 	gpios[1] = cpu_to_fdt32(gpio >> 5);
 	gpios[2] = cpu_to_fdt32(gpio & 0x1F);
-	gpios[3] = cpu_to_fdt32(0);
+	gpios[3] = cpu_to_fdt32(s ? 1 : 0);
 	ret |= fdt_setprop(blob, offset, "reset-gpios", gpios, sizeof(gpios));
 
 	if (lcd_olinuxino_eeprom.id == 9278)

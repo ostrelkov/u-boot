@@ -112,8 +112,6 @@ static int board_fix_atecc508a(void *blob)
 	if (eeprom->id != 8958)
 		return 0;
 
-	debug("Updating atecc508a@60 node...\n");
-
 	/**
 	 * Add the following node:
 	 * &i2c {
@@ -149,8 +147,6 @@ static int board_fix_spi_flash(void *blob)
 	 */
 	if (eeprom->config.storage != 's' && eeprom->id != 8958)
 		return 0;
-
-	debug("Updating spi-nor@0 node...\n");
 
 	/*
 	 * Find /soc@01c00000/pinctrl@01c20800
@@ -271,8 +267,6 @@ static int board_fix_nand(void *blob)
 	/* Modify only boards with nand storage */
 	if (eeprom->config.storage != 'n')
 		return 0;
-
-	debug("Updating nand0@0 node...\n");
 
 	/*
 	 * Find /soc@01c00000/pinctrl@01c20800
@@ -812,8 +806,15 @@ static int board_fix_lcd_olinuxino(void *blob)
 		if (offset < 0)
 			return offset;
 
-		ret = fdt_setprop_string(blob, offset, "compatible", "goodix,gt911");
-		ret |= fdt_setprop_u32(blob, offset, "reg", 0x14);
+		if (s && !strcmp(s, "LCD-OLinuXino-5")) {
+			ret = fdt_setprop_string(blob, offset, "compatible", "edt,edt-ft5306");
+			ret |= fdt_setprop_u32(blob, offset, "reg", 0x38);
+			ret |= fdt_setprop_u32(blob, offset, "touchscreen-size-x", 800);
+			ret |= fdt_setprop_u32(blob, offset, "touchscreen-size-y", 480);
+		} else {
+			ret = fdt_setprop_string(blob, offset, "compatible", "goodix,gt911");
+			ret |= fdt_setprop_u32(blob, offset, "reg", 0x14);
+		}
 		ret |= fdt_setprop_u32(blob, offset, "interrupt-parent", pinctrl_phandle);
 
 		gpio = sunxi_name_to_gpio(olimex_get_lcd_irq_pin());
@@ -832,7 +833,10 @@ static int board_fix_lcd_olinuxino(void *blob)
 		gpios[0] = cpu_to_fdt32(pinctrl_phandle);
 		gpios[1] = cpu_to_fdt32(gpio >> 5);
 		gpios[2] = cpu_to_fdt32(gpio & 0x1F);
-		gpios[3] = cpu_to_fdt32(0);
+		if (s && !strcmp(s, "LCD-OLinuXino-5"))
+			gpios[3] = cpu_to_fdt32(1);
+		else
+			gpios[3] = cpu_to_fdt32(0);
 		ret |= fdt_setprop(blob, offset, "reset-gpios", gpios, sizeof(gpios));
 
 		if (lcd_olinuxino_eeprom.id == 9278)
