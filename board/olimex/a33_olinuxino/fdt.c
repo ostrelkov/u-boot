@@ -235,6 +235,10 @@ static int board_fix_lcd_olinuxino(void *blob)
  	if (offset < 0)
  		return offset;
 
+	ret = fdt_setprop_empty(blob, offset, "regulator-always-on");
+	if (ret)
+		return ret;
+
  	power_supply_phandle = fdt_get_phandle(blob, offset);
  	if (power_supply_phandle < 0)
   		return offset;
