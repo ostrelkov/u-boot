@@ -191,6 +191,10 @@ static int do_monitor_list(cmd_tbl_t *cmdtp, int flag,
 	printf("%-30s - %-10s\n", "LCD-OLinuXino-7", "Video output to LCD-OLinuXino-7");
 	printf("%-30s - %-10s\n", "LCD-OLinuXino-5", "Video output to LCD-OLinuXino-5");
 	printf("%-30s - %-10s\n", "LCD-OLinuXino-10", "Video output to LCD-OLinuXino-10");
+#ifdef CONFIG_TARGET_A20_OLINUXINO
+	printf("%-30s - %-10s\n", "LCD-OLinuXino-15.6", "Video output to LCD-OLinuXino-15.6");
+	printf("%-30s - %-10s\n", "LCD-OLinuXino-15.6FHD", "Video output to LCD-OLinuXino-15.6FHD");
+#endif
 
 	return CMD_RET_SUCCESS;
 }
@@ -220,6 +224,12 @@ static int do_monitor_set(cmd_tbl_t *cmdtp, int flag,
 		env_set("lcd_olinuxino", "LCD-OLinuXino-7");
 	else if (!strcmp(p, "lcd-olinuxino-10"))
 		env_set("lcd_olinuxino", "LCD-OLinuXino-10");
+#ifdef CONFIG_TARGET_A20_OLINUXINO
+	else if (!strcmp(p, "lcd-olinuxino-15.6"))
+		env_set("lcd_olinuxino", "LCD-OLinuXino-15.6");
+	else if (!strcmp(p, "lcd-olinuxino-15.6FHD"))
+		env_set("lcd_olinuxino", "LCD-OLinuXino-15.6FHD");
+#endif
 	else
 		printf("Invalid LCD! Run \"olinuxino monitor list\" for supported devices.\n");
 

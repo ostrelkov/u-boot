@@ -15,6 +15,8 @@
 #define MEDIA_BUS_FMT_RGB666_1X18               0x1009
 #define MEDIA_BUS_FMT_RGB888_1X24               0x100a
 
+#define LCD_OLINUXINO_IF_PARALLEL	0
+#define LCD_OLINUXINO_IF_LVDS		1
 
 struct lcd_olinuxino_mode {
 	u32 pixelclock;
@@ -63,5 +65,7 @@ bool lcd_olinuxino_is_present(void);
 char * lcd_olinuxino_video_mode(void);
 uint8_t lcd_olinuxino_dclk_phase(void);
 char * lcd_olinuxino_compatible(void);
+uint8_t lcd_olinuxino_interface(void);
+struct lcd_olinuxino_board * lcd_olinuxino_get_data(void);
 
 #endif /* __LCD_OLINUXINO_H */

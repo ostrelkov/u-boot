@@ -543,11 +543,16 @@ static void sunxi_lcdc_init(void)
 
 	/* Clock on */
 	setbits_le32(&ccm->ahb_gate1, 1 << AHB_GATE_OFFSET_LCD0);
+#ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
+	if (lcd_olinuxino_interface() == LCD_OLINUXINO_IF_LVDS)
+		setbits_le32(&ccm->lvds_clk_cfg, CCM_LVDS_CTRL_RST);
+#else
 #ifdef CONFIG_VIDEO_LCD_IF_LVDS
 #ifdef CONFIG_SUNXI_GEN_SUN6I
 	setbits_le32(&ccm->ahb_reset2_cfg, 1 << AHB_RESET_OFFSET_LVDS);
 #else
 	setbits_le32(&ccm->lvds_clk_cfg, CCM_LVDS_CTRL_RST);
+#endif
 #endif
 #endif
 
@@ -682,6 +687,13 @@ static void sunxi_lcdc_tcon0_mode_set(const struct ctfb_res_modes *mode,
 	int clk_div, clk_double, pin;
 	struct display_timing timing;
 
+#ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
+	int mux = (lcd_olinuxino_interface() == LCD_OLINUXINO_IF_PARALLEL ?
+		   SUNXI_GPD_LCD0 :
+		   SUNXI_GPD_LVDS0);
+	for (pin = SUNXI_GPD(0); pin <= SUNXI_GPD(19); pin++) {
+		sunxi_gpio_set_cfgpin(pin, mux);
+#else
 #if defined CONFIG_MACH_SUN8I && defined CONFIG_VIDEO_LCD_IF_LVDS
 	for (pin = SUNXI_GPD(18); pin <= SUNXI_GPD(27); pin++) {
 #else
@@ -695,6 +707,7 @@ static void sunxi_lcdc_tcon0_mode_set(const struct ctfb_res_modes *mode,
 #endif
 #ifdef CONFIG_VIDEO_LCD_PANEL_EDP_4_LANE_1620M_VIA_ANX9804
 		sunxi_gpio_set_drv(pin, 3);
+#endif
 #endif
 	}
 

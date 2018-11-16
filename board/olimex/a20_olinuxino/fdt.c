@@ -24,6 +24,7 @@
 #define FDT_PATH_VCC5V0		"/vcc5v0"
 
 #define FDT_COMP_PINCTRL	"allwinner,sun7i-a20-pinctrl"
+#define FDT_COMP_CCU		"allwinner,sun7i-a20-ccu"
 
 enum devices {
 	PATH_I2C2 = 0,
@@ -473,7 +474,333 @@ int olinuxino_fdt_fixup(void *blob)
 }
 
 #ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
-static int board_fix_lcd_olinuxino(void *blob)
+static int board_fix_lcd_olinuxino_lvds(void *blob)
+{
+	struct lcd_olinuxino_board *lcd = lcd_olinuxino_get_data();
+	int offset;
+	int ret = 0;
+	int gpio;
+	fdt32_t gpios[4];
+	fdt32_t ccu[2];
+	fdt32_t phandles[2];
+	uint32_t pins_phandle[2] = {};
+
+	uint32_t ccu_phandle;
+	uint32_t pinctrl_phandle;
+	uint32_t backlight_phandle;
+	uint32_t power_supply_phandle;
+	uint32_t panel_endpoint_phandle;
+	uint32_t tcon0_endpoint_phandle;
+
+
+	offset = fdt_node_offset_by_compatible(blob, -1, FDT_COMP_PINCTRL);
+ 	if (offset < 0)
+ 		return offset;
+
+	pinctrl_phandle = fdt_get_phandle(blob, offset);
+	if (pinctrl_phandle < 0)
+ 		return offset;
+
+	offset = fdt_node_offset_by_compatible(blob, -1, FDT_COMP_CCU);
+ 	if (offset < 0)
+ 		return offset;
+
+	ccu_phandle = fdt_get_phandle(blob, offset);
+	if (ccu_phandle < 0)
+ 		return offset;
+
+
+	offset = fdt_path_offset(blob, FDT_PATH_VCC5V0);
+ 	if (offset < 0)
+ 		return offset;
+
+	power_supply_phandle = fdt_get_phandle(blob, offset);
+	if (power_supply_phandle < 0)
+ 		return offset;
+
+
+
+	/**
+	 * backlight: backlight {
+	 * 	compatible = "gpio-backlight";
+	 *	gpios = <&pio 1 2 GPIO_ACTIVE_LOW>;
+	 *	default-on;
+	 * };
+	 */
+
+	offset = fdt_path_offset(blob, FDT_PATH_ROOT);
+ 	if (offset < 0)
+ 		return offset;
+
+	offset = fdt_add_subnode(blob, offset, "backlight");
+	if (offset < 0)
+		return offset;
+
+	ret |= fdt_setprop_string(blob, offset, "compatible", "gpio-backlight");
+	gpios[0] = cpu_to_fdt32(pinctrl_phandle);
+	gpios[1] = cpu_to_fdt32(1);
+	gpios[2] = cpu_to_fdt32(2);
+	gpios[3] = cpu_to_fdt32(1);
+	ret = fdt_setprop(blob, offset, "gpios", gpios, sizeof(gpios));
+	ret |= fdt_setprop_empty(blob, offset, "default-on");
+	if (ret < 0)
+		return ret;
+
+	backlight_phandle = fdt_create_phandle(blob, offset);
+	if (!backlight_phandle)
+		return -1;
+
+
+	/**
+	 * lcd0_lvds0_pins: lcd0_lvds0_pins@0 {
+	 * 	pins = "PD0", "PD1", "PD2", "PD3", "PD4", "PD5",
+	 * 		"PD6", "PD7", "PD8", "PD9";
+	 * 	function = "lvds0";
+	 * };
+	 *
+	 * lcd0_lvds1_pins: lcd0_lvds1_pins@0 {
+	 * 	pins = "PD10", "PD11", "PD12", "PD13", "PD14", "PD15",
+	 * 		"PD16", "PD17", "PD18", "PD19";
+	 * 	function = "lvds1";
+	 * };
+	 */
+
+	offset = fdt_node_offset_by_compatible(blob, -1, FDT_COMP_PINCTRL);
+ 	if (offset < 0)
+ 		return offset;
+
+	offset = fdt_add_subnode(blob, offset, "lcd0_lvds0_pins@0");
+	if (offset < 0)
+		return offset;
+
+	pins_phandle[0] = fdt_create_phandle(blob, offset);
+	if (!pins_phandle[0])
+		return -1;
+
+	ret = fdt_setprop_string(blob, offset, "function" , "lvds0");
+	ret |= fdt_setprop_string(blob, offset, "pins" , "PD0");
+ 	ret |= fdt_appendprop_string(blob, offset, "pins", "PD1");
+ 	ret |= fdt_appendprop_string(blob, offset, "pins", "PD2");
+	ret |= fdt_appendprop_string(blob, offset, "pins", "PD4");
+	ret |= fdt_appendprop_string(blob, offset, "pins", "PD5");
+	ret |= fdt_appendprop_string(blob, offset, "pins", "PD6");
+	ret |= fdt_appendprop_string(blob, offset, "pins", "PD7");
+	ret |= fdt_appendprop_string(blob, offset, "pins", "PD8");
+	ret |= fdt_appendprop_string(blob, offset, "pins", "PD9");
+	if (ret < 0)
+ 		return ret;
+
+	offset = fdt_node_offset_by_compatible(blob, -1, FDT_COMP_PINCTRL);
+ 	if (offset < 0)
+ 		return offset;
+
+	offset = fdt_add_subnode(blob, offset, "lcd0_lvds1_pins@0");
+	if (offset < 0)
+		return offset;
+
+	pins_phandle[1] = fdt_create_phandle(blob, offset);
+	if (!pins_phandle[1])
+		return -1;
+
+	ret = fdt_setprop_string(blob, offset, "function" , "lvds1");
+	ret |= fdt_appendprop_string(blob, offset, "pins", "PD10");
+	ret |= fdt_appendprop_string(blob, offset, "pins", "PD11");
+	ret |= fdt_appendprop_string(blob, offset, "pins", "PD12");
+	ret |= fdt_appendprop_string(blob, offset, "pins", "PD13");
+	ret |= fdt_appendprop_string(blob, offset, "pins", "PD14");
+	ret |= fdt_appendprop_string(blob, offset, "pins", "PD15");
+	ret |= fdt_appendprop_string(blob, offset, "pins", "PD16");
+	ret |= fdt_appendprop_string(blob, offset, "pins", "PD17");
+	ret |= fdt_appendprop_string(blob, offset, "pins", "PD18");
+	ret |= fdt_appendprop_string(blob, offset, "pins", "PD19");
+	if (ret < 0)
+ 		return ret;
+
+
+	/**
+	 * panel {
+	 * 	compatible = "panel-lvds";
+	 *
+	 * 	width-mm = <344>;
+	 *	height-mm = <193>;
+	 *	data-mapping = "jeida-18";
+	 *
+	 * 	#address-cells = <1>;
+	 * 	#size-cells = <0>;
+	 * 	reg = <0x50>;
+	 *
+	 * 	pinctrl-names = "default";
+	 * 	pinctrl-0 = <&lcd0_lvds1_pins &lcd0_lvds0_pins>;
+	 *
+	 * 	power-supply = <&reg_vcc5v0>;
+	 *
+	 *	enable-gpios = <&pio 7 8 GPIO_ACTIVE_HIGH>;
+	 * 	backlight = <&backlight>;
+	 * 	status = "okay";
+	 *	panel-timing {
+	 * 		clock-frequency = <71000000>;
+	 * 		hactive = <1280>;
+	 * 		vactive = <800>;
+	 * 		hsync-len = <70>;
+	 * 		hfront-porch = <20>;
+	 * 		hback-porch = <70>;
+	 * 		vsync-len = <5>;
+	 * 		vfront-porch = <3>;
+	 * 		vback-porch = <15>;
+	 *	};
+	 *
+	 * 	port@0 {
+	 * 		#address-cells = <1>;
+	 * 		#size-cells = <0>;
+	 * 		reg = <0>;
+	 *
+	 * 		panel_in_tcon0: endpoint@0 {
+	 * 			#address-cells = <1>;
+	 * 			#size-cells = <0>;
+	 * 			reg = <0>;
+	 * 			remote-endpoint = <&tcon0_out_panel>;
+	 * 			};
+	 *		};
+	 *	};
+	 * };
+	 */
+
+	offset = fdt_path_offset(blob, FDT_PATH_ROOT);
+	if (offset < 0)
+		return offset;
+
+	offset = fdt_add_subnode(blob, offset, "panel");
+	if (offset < 0)
+		return offset;
+
+	ret = fdt_setprop_string(blob, offset, "compatible", "panel-lvds");
+
+	ret |= fdt_setprop_u32(blob, offset, "width-mm", 362);
+	ret |= fdt_setprop_u32(blob, offset, "height-mm", 193);
+	ret |= fdt_setprop_string(blob, offset, "data-mapping", "jeida-18");
+
+	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 1);
+	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 0);
+	ret |= fdt_setprop_string(blob, offset, "pinctrl-names", "default");
+	phandles[0] = cpu_to_fdt32(pins_phandle[0]);
+	phandles[1] = cpu_to_fdt32(pins_phandle[1]);
+	ret |= fdt_setprop(blob, offset, "pinctrl-0", phandles, sizeof(phandles));
+
+	ret |= fdt_setprop_u32(blob, offset, "power-supply", power_supply_phandle);
+	ret |= fdt_setprop_u32(blob, offset, "backlight", backlight_phandle);
+
+	gpios[0] = cpu_to_fdt32(pinctrl_phandle);
+	gpio = sunxi_name_to_gpio(olimex_get_lcd_pwr_pin());
+	gpios[1] = cpu_to_fdt32(gpio >> 5);
+	gpios[2] = cpu_to_fdt32(gpio & 0x1F);
+	gpios[3] = cpu_to_fdt32(0);
+	ret |= fdt_setprop(blob, offset, "enable-gpios", gpios, sizeof(gpios));
+	ret |= fdt_set_node_status(blob, offset, FDT_STATUS_OKAY, 0);
+	if (ret < 0)
+ 		return ret;
+
+
+	offset = fdt_add_subnode(blob, offset, "panel-timing");
+
+	ret = fdt_setprop_u32(blob, offset, "clock-frequency", lcd->mode.pixelclock * 1000);
+	ret |= fdt_setprop_u32(blob, offset, "hactive", lcd->mode.hactive);
+	ret |= fdt_setprop_u32(blob, offset, "vactive", lcd->mode.vactive);
+	ret |= fdt_setprop_u32(blob, offset, "hsync-len", lcd->mode.hpw);
+	ret |= fdt_setprop_u32(blob, offset, "hfront-porch", lcd->mode.hfp);
+	ret |= fdt_setprop_u32(blob, offset, "hback-porch", lcd->mode.hbp);
+	ret |= fdt_setprop_u32(blob, offset, "vsync-len", lcd->mode.vpw);
+	ret |= fdt_setprop_u32(blob, offset, "vfront-porch", lcd->mode.vfp);
+	ret |= fdt_setprop_u32(blob, offset, "vback-porch", lcd->mode.vbp);
+	if (ret < 0)
+ 		return ret;
+
+	offset = fdt_path_offset(blob, "/panel");
+	if (offset < 0)
+		return offset;
+
+	offset = fdt_add_subnode(blob, offset, "port@0");
+	if (offset < 0)
+		return offset;
+
+	ret = fdt_setprop_u32(blob, offset, "reg", 0);
+	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 0);
+	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 1);
+	if (ret < 0)
+ 		return ret;
+
+	offset = fdt_add_subnode(blob, offset, "endpoint@0");
+	if (offset < 0)
+		return offset;
+	ret = fdt_setprop_u32(blob, offset, "reg", 0);
+	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 0);
+	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 1);
+	if (ret < 0)
+ 		return ret;
+
+	panel_endpoint_phandle = fdt_create_phandle(blob, offset);
+	if (!panel_endpoint_phandle)
+		return -1;
+
+
+	/**
+	* &tcon0_out {
+	* 	#address-cells = <1>;
+	* 	#size-cells = <0>;
+	*
+	* 	tcon0_out_panel: endpoint@0 {
+	* 		#address-cells = <1>;
+	* 		#size-cells = <0>;
+	* 		reg = <0>;
+	* 		remote-endpoint = <&panel_in_tcon0>;
+	* 		allwinner,tcon-channel = <0>;
+	* 	};
+	* };
+	*/
+
+	offset = get_path_offset(blob, PATH_TCON0, NULL);
+  	if (offset < 0)
+  		return offset;
+
+	ccu[0] = cpu_to_fdt32(ccu_phandle);
+	ccu[1] = cpu_to_fdt32(18);
+	ret |= fdt_appendprop(blob, offset, "resets", ccu, sizeof(ccu));
+	ret |= fdt_appendprop_string(blob, offset, "reset-names", "lvds");
+	if (ret)
+		return ret;
+
+	offset = fdt_subnode_offset(blob, offset, "ports");
+	if (offset < 0)
+		return offset;
+
+	offset = fdt_subnode_offset(blob, offset, "port@1");
+	if (offset < 0)
+		return offset;
+
+	offset = fdt_add_subnode(blob, offset, "endpoint@0");
+	if (offset < 0)
+		return offset;
+
+	ret = fdt_setprop_u32(blob, offset, "allwinner,tcon-channel", 0);
+	ret |= fdt_setprop_u32(blob, offset, "remote-endpoint", panel_endpoint_phandle);
+	ret |= fdt_setprop_u32(blob, offset, "reg", 0);
+	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 0);
+	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 1);
+	if (ret < 0)
+ 		return ret;
+
+	tcon0_endpoint_phandle  = fdt_create_phandle(blob, offset);
+	if (!tcon0_endpoint_phandle)
+		return -1;
+
+	offset = fdt_path_offset(blob, "/panel/port@0/endpoint@0");
+	if (offset < 0)
+		return offset;
+
+	return ret;
+
+}
+
+static int board_fix_lcd_olinuxino_rgb(void *blob)
 {
 	uint32_t power_supply_phandle;
 	uint32_t backlight_phandle;
@@ -487,14 +814,11 @@ static int board_fix_lcd_olinuxino(void *blob)
 	fdt32_t irq[3];
 	fdt32_t levels[11];
 	char path[64];
-	char pin[5];
 	int offset;
 	int ret = 0;
 	int gpio;
 	char *s = env_get("lcd_olinuxino");
 	int i;
-
-	debug("Enabling LCD-OLinuXino...\n");
 
 
 	offset = fdt_path_offset(blob, FDT_PATH_VCC5V0);
@@ -612,9 +936,11 @@ static int board_fix_lcd_olinuxino(void *blob)
  	ret |= fdt_setprop_string(blob, offset, "pins" , "PD0");
  	ret |= fdt_appendprop_string(blob, offset, "pins", "PD1");
  	ret |= fdt_appendprop_string(blob, offset, "pins", "PD2");
+	ret |= fdt_appendprop_string(blob, offset, "pins", "PD3");
 	ret |= fdt_appendprop_string(blob, offset, "pins", "PD4");
 	ret |= fdt_appendprop_string(blob, offset, "pins", "PD5");
 	ret |= fdt_appendprop_string(blob, offset, "pins", "PD6");
+	ret |= fdt_appendprop_string(blob, offset, "pins", "PD7");
 	ret |= fdt_appendprop_string(blob, offset, "pins", "PD8");
 	ret |= fdt_appendprop_string(blob, offset, "pins", "PD9");
 	ret |= fdt_appendprop_string(blob, offset, "pins", "PD10");
@@ -684,7 +1010,7 @@ static int board_fix_lcd_olinuxino(void *blob)
 		if (offset < 0)
 			return offset;
 
-		offset = fdt_add_subnode(blob, offset, "panel@0");
+		offset = fdt_add_subnode(blob, offset, "panel");
 		if (offset < 0)
 			return offset;
 	}
@@ -699,11 +1025,10 @@ static int board_fix_lcd_olinuxino(void *blob)
 	ret |= fdt_setprop_u32(blob, offset, "power-supply", power_supply_phandle);
 	ret |= fdt_setprop_u32(blob, offset, "backlight", backlight_phandle);
 
-	strcpy(pin, olimex_get_lcd_pwr_pin());
-
 	gpios[0] = cpu_to_fdt32(pinctrl_phandle);
-	gpios[1] = cpu_to_fdt32(pin[1] - 'A');
-	gpios[2] = cpu_to_fdt32(simple_strtoul(&pin[2], NULL, 10));
+	gpio = sunxi_name_to_gpio(olimex_get_lcd_pwr_pin());
+	gpios[1] = cpu_to_fdt32(gpio >> 5);
+	gpios[2] = cpu_to_fdt32(gpio & 0x1F);
 	gpios[3] = cpu_to_fdt32(0);
 	ret |= fdt_setprop(blob, offset, "enable-gpios", gpios, sizeof(gpios));
 	ret |= fdt_set_node_status(blob, offset, FDT_STATUS_OKAY, 0);
@@ -782,7 +1107,7 @@ static int board_fix_lcd_olinuxino(void *blob)
 	if (!s)
 		strcat(path, "/panel@50/port@0/endpoint@0");
 	else
-		strcat(path, "/panel@0/port@0/endpoint@0");
+		strcat(path, "/panel/port@0/endpoint@0");
 
 	offset = fdt_path_offset(blob, path);
 	if (offset < 0)
@@ -880,7 +1205,16 @@ int ft_system_setup(void *blob, bd_t *bd)
 	/* Check if lcd is the default monitor */
 	char *s = env_get("monitor");
 	if (s != NULL && !strncmp(s, "lcd", 3)) {
-		ret = board_fix_lcd_olinuxino(blob);
+
+		/* Check RGB or LVDS mode should be enabled */
+		s = env_get("lcd_olinuxino");
+		if (s != NULL &&
+		   (!strcmp(s, "LCD-OLinuXino-15.6") ||
+		   (!strcmp(s, "LCD-OLinuXino-15.6FHD"))))
+			ret = board_fix_lcd_olinuxino_lvds(blob);
+		else
+			ret = board_fix_lcd_olinuxino_rgb(blob);
+
 		if (ret < 0)
 			return ret;
 		}

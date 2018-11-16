@@ -95,6 +95,25 @@ struct lcd_olinuxino_board lcd_olinuxino_boards[] = {
 	},
 	{
 		{
+			.name = "LCD-OLinuXino-15.6",
+		},
+		{
+			.pixelclock = 70000,
+			.hactive = 1366,
+			.hfp = 20,
+			.hbp = 54,
+			.hpw = 0,
+			.vactive = 768,
+			.vfp = 17,
+			.vbp = 23,
+			.vpw = 0,
+			.refresh = 60,
+			.flags = 0
+		}
+
+	},
+	{
+		{
 			.name = "",
 		},
 	},
@@ -220,14 +239,13 @@ char * lcd_olinuxino_compatible()
 		return "olimex,lcd-olinuxino";
 
 	if (!strcmp(s, "LCD-OLinuXino-4.3TS"))
-		return "olimex,lcd-olinuxino-43";
+		return "olimex,lcd-olinuxino-4.3";
 	else if (!strcmp(s, "LCD-OLinuXino-5"))
 		return "olimex,lcd-olinuxino-5";
 	else if (!strcmp(s, "LCD-OLinuXino-7"))
 		return "olimex,lcd-olinuxino-7";
 	else if (!strcmp(s, "LCD-OLinuXino-10"))
 		return "olimex,lcd-olinuxino-10";
-
 
 	return "olimex,lcd-olinuxino";
 }
@@ -236,4 +254,38 @@ uint8_t lcd_olinuxino_dclk_phase()
 {
 	/* For now always return 0 */
 	return 0;
+}
+
+uint8_t lcd_olinuxino_interface()
+{
+	char *s = env_get("lcd_olinuxino");
+
+	/* Is not set assume LCD-DRIVER */
+	if (!s)
+		return LCD_OLINUXINO_IF_PARALLEL;
+
+	/* Check LVDS or PARALLEL */
+	if (!strcmp(s, "LCD-OLinuXino-15.6") ||
+	    !strcmp(s, "LCD-OLinuXino-15.6FHD"))
+		return LCD_OLINUXINO_IF_LVDS;
+
+	return LCD_OLINUXINO_IF_PARALLEL;
+}
+
+struct lcd_olinuxino_board * lcd_olinuxino_get_data()
+{
+	struct lcd_olinuxino_board *lcd = lcd_olinuxino_boards;
+	char *s = env_get("lcd_olinuxino");
+	int ret;
+
+	if (!s)
+		return NULL;
+
+	while (strlen(lcd->info.name)) {
+		if (!strcmp(lcd->info.name, s))
+			return lcd;
+		lcd++;
+	}
+
+	return NULL;
 }

@@ -274,7 +274,7 @@ static int board_fix_lcd_olinuxino(void *blob)
 		if (offset < 0)
 			return offset;
 
-		offset = fdt_add_subnode(blob, offset, "panel@0");
+		offset = fdt_add_subnode(blob, offset, "panel");
 		if (offset < 0)
 			return offset;
 	}
@@ -392,7 +392,7 @@ static int board_fix_lcd_olinuxino(void *blob)
 	if (!s)
 		strcat(path, "/panel@50/port@0/endpoint@0");
 	else
-		strcat(path, "/panel@0/port@0/endpoint@0");
+		strcat(path, "/panel/port@0/endpoint@0");
 
 	offset = fdt_path_offset(blob, path);
 	if (offset < 0)

@@ -13,6 +13,8 @@
 #include <asm/arch/lcdc.h>
 #include <asm/io.h>
 
+#include "../../../board/olimex/common/lcd_olinuxino.h"
+
 static int lcdc_get_clk_delay(const struct display_timing *mode, int tcon)
 {
 	int delay;
@@ -44,6 +46,19 @@ void lcdc_init(struct sunxi_lcdc_reg * const lcdc)
 void lcdc_enable(struct sunxi_lcdc_reg * const lcdc, int depth)
 {
 	setbits_le32(&lcdc->ctrl, SUNXI_LCDC_CTRL_TCON_ENABLE);
+#ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
+	if (lcd_olinuxino_interface() != LCD_OLINUXINO_IF_LVDS)
+		return;
+
+	setbits_le32(&lcdc->tcon0_lvds_intf, SUNXI_LCDC_TCON0_LVDS_INTF_ENABLE);
+	setbits_le32(&lcdc->lvds_ana0, SUNXI_LCDC_LVDS_ANA0);
+	setbits_le32(&lcdc->lvds_ana0, SUNXI_LCDC_LVDS_ANA0_UPDATE);
+	udelay(2); /* delay at least 1200 ns */
+	setbits_le32(&lcdc->lvds_ana1, SUNXI_LCDC_LVDS_ANA1_INIT1);
+	udelay(1); /* delay at least 120 ns */
+	setbits_le32(&lcdc->lvds_ana1, SUNXI_LCDC_LVDS_ANA1_INIT2);
+	setbits_le32(&lcdc->lvds_ana0, SUNXI_LCDC_LVDS_ANA0_UPDATE);
+#else
 #ifdef CONFIG_VIDEO_LCD_IF_LVDS
 	setbits_le32(&lcdc->tcon0_lvds_intf, SUNXI_LCDC_TCON0_LVDS_INTF_ENABLE);
 	setbits_le32(&lcdc->lvds_ana0, SUNXI_LCDC_LVDS_ANA0);
@@ -63,6 +78,7 @@ void lcdc_enable(struct sunxi_lcdc_reg * const lcdc, int depth)
 	udelay(1); /* delay at least 120 ns */
 	setbits_le32(&lcdc->lvds_ana1, SUNXI_LCDC_LVDS_ANA1_INIT2);
 	setbits_le32(&lcdc->lvds_ana0, SUNXI_LCDC_LVDS_ANA0_UPDATE);
+#endif
 #endif
 #endif
 }
@@ -100,6 +116,20 @@ void lcdc_tcon0_mode_set(struct sunxi_lcdc_reg * const lcdc,
 	writel(SUNXI_LCDC_TCON0_TIMING_V_TOTAL(total) |
 	       SUNXI_LCDC_TCON0_TIMING_V_BP(bp), &lcdc->tcon0_timing_v);
 
+#ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
+	if (lcd_olinuxino_interface() == LCD_OLINUXINO_IF_PARALLEL) {
+		writel(SUNXI_LCDC_X(mode->hsync_len.typ) |
+		       SUNXI_LCDC_Y(mode->vsync_len.typ), &lcdc->tcon0_timing_sync);
+
+		writel(0, &lcdc->tcon0_hv_intf);
+		writel(0, &lcdc->tcon0_cpu_intf);
+	} else {
+		val = (depth == 18) ? 1 : 0;
+		writel(SUNXI_LCDC_TCON0_LVDS_INTF_BITWIDTH(val) |
+		       SUNXI_LCDC_TCON0_LVDS_INTF_MODE(1) |
+		       SUNXI_LCDC_TCON0_LVDS_CLK_SEL_TCON0, &lcdc->tcon0_lvds_intf);
+	}
+#else
 #if defined(CONFIG_VIDEO_LCD_IF_PARALLEL) || defined(CONFIG_VIDEO_DE2)
 	writel(SUNXI_LCDC_X(mode->hsync_len.typ) |
 	       SUNXI_LCDC_Y(mode->vsync_len.typ), &lcdc->tcon0_timing_sync);
@@ -112,7 +142,7 @@ void lcdc_tcon0_mode_set(struct sunxi_lcdc_reg * const lcdc,
 	writel(SUNXI_LCDC_TCON0_LVDS_INTF_BITWIDTH(val) |
 	       SUNXI_LCDC_TCON0_LVDS_CLK_SEL_TCON0, &lcdc->tcon0_lvds_intf);
 #endif
-
+#endif
 	if (depth == 18 || depth == 16) {
 		writel(SUNXI_LCDC_TCON0_FRM_SEED, &lcdc->tcon0_frm_seed[0]);
 		writel(SUNXI_LCDC_TCON0_FRM_SEED, &lcdc->tcon0_frm_seed[1]);
@@ -217,6 +247,15 @@ void lcdc_pll_set(struct sunxi_ccm_reg *ccm, int tcon, int dotclock,
 	bool use_mipi_pll = false;
 
 	if (tcon == 0) {
+#ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
+	if (lcd_olinuxino_interface() == LCD_OLINUXINO_IF_PARALLEL) {
+		min_m = 6;
+		max_m = 127;
+	} else {
+		min_m = 7;
+		max_m = 7;
+	}
+#else
 #if defined(CONFIG_VIDEO_LCD_IF_PARALLEL) || defined(CONFIG_SUNXI_DE2)
 		min_m = 6;
 		max_m = 127;
@@ -225,6 +264,8 @@ void lcdc_pll_set(struct sunxi_ccm_reg *ccm, int tcon, int dotclock,
 		min_m = 7;
 		max_m = 7;
 #endif
+#endif
+
 	} else {
 		min_m = 1;
 		max_m = 15;

@@ -302,6 +302,10 @@ int g_dnl_board_usb_cable_connected(void)
 	}
 
 	return sun4i_usb_phy_vbus_detect(&phy);
+	if (ret == 1)
+		return -ENODEV;
+
+	return ret;
 }
 #endif /* CONFIG_USB_GADGET */
 
