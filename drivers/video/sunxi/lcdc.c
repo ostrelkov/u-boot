@@ -316,7 +316,17 @@ void lcdc_pll_set(struct sunxi_ccm_reg *ccm, int tcon, int dotclock,
 		}
 	}
 
-#ifdef CONFIG_MACH_SUN6I
+#ifndef CONFIG_MACH_SUN6I
+	/*
+	 * If there is no match, set highest possible and drop the refresh rate.
+	 */
+	if (tcon == 0 && best_n == 0) {
+		best_double = 1;
+		best_n = 127;
+		best_m = 7;
+
+	}
+#else
 	/*
 	 * Use the MIPI pll if we've been unable to find any matching setting
 	 * for PLL3, this happens with high dotclocks because of min_m = 6.

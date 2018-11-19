@@ -37,10 +37,6 @@
 #include "../../../board/olimex/common/lcd_olinuxino.h"
 #endif
 
-#ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
-#define PWM_ON 0
-#define PWM_OFF 1
-#else
 #ifdef CONFIG_VIDEO_LCD_BL_PWM_ACTIVE_LOW
 #define PWM_ON 0
 #define PWM_OFF 1
@@ -48,7 +44,7 @@
 #define PWM_ON 1
 #define PWM_OFF 0
 #endif
-#endif
+
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -563,7 +559,9 @@ static void sunxi_lcdc_panel_enable(void)
 {
 	int pin, reset_pin;
 
-#ifndef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
+#ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
+	struct lcd_olinuxino_board *lcd = lcd_olinuxino_get_data();
+#else
 	/*
 	 * Start with backlight disabled to avoid the screen flashing to
 	 * white while the lcd inits.
@@ -578,22 +576,29 @@ static void sunxi_lcdc_panel_enable(void)
 
 #ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
 	pin = sunxi_name_to_gpio(olimex_get_lcd_pwm_pin());
+	if (pin >= 0) {
+		gpio_request(pin, "lcd_backlight_pwm");
+
+		if (!strcmp(lcd->info.name, "LCD-OLinuXino-15.6FHD"))
+			gpio_direction_output(pin, 0);
+		else
+			gpio_direction_output(pin, 1);
+	}
+
+	reset_pin = -1;
+
 #else
 	pin = sunxi_name_to_gpio(CONFIG_VIDEO_LCD_BL_PWM);
-#endif
 	if (pin >= 0) {
 		gpio_request(pin, "lcd_backlight_pwm");
 		gpio_direction_output(pin, PWM_OFF);
 	}
 
-#ifndef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
 	reset_pin = sunxi_name_to_gpio(CONFIG_VIDEO_LCD_RESET);
 	if (reset_pin >= 0) {
 		gpio_request(reset_pin, "lcd_reset");
 		gpio_direction_output(reset_pin, 0); /* Assert reset */
 	}
-#else
-	reset_pin = -1;
 #endif
 
 	/* Give the backlight some time to turn off and power up the panel. */
@@ -615,6 +620,9 @@ static void sunxi_lcdc_panel_enable(void)
 static void sunxi_lcdc_backlight_enable(void)
 {
 	int pin;
+#ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
+	struct lcd_olinuxino_board *lcd = lcd_olinuxino_get_data();
+#endif
 
 	/*
 	 * We want to have scanned out at least one frame before enabling the
@@ -622,17 +630,20 @@ static void sunxi_lcdc_backlight_enable(void)
 	 */
 	mdelay(40);
 
-#ifndef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
+#ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
+	pin = sunxi_name_to_gpio(olimex_get_lcd_pwm_pin());
+	if (pin >= 0) {
+		if (!strcmp(lcd->info.name, "LCD-OLinuXino-15.6FHD"))
+			gpio_direction_output(pin, 1);
+		else
+			gpio_direction_output(pin, 0);
+	}
+#else
 	pin = sunxi_name_to_gpio(CONFIG_VIDEO_LCD_BL_EN);
 	if (pin >= 0)
 		gpio_direction_output(pin, 1);
-#endif
 
-#ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
-	pin = sunxi_name_to_gpio(olimex_get_lcd_pwm_pin());
-#else
 	pin = sunxi_name_to_gpio(CONFIG_VIDEO_LCD_BL_PWM);
-#endif
 
 #ifdef SUNXI_PWM_PIN0
 	if (pin == SUNXI_PWM_PIN0) {
@@ -646,6 +657,7 @@ static void sunxi_lcdc_backlight_enable(void)
 #endif
 	if (pin >= 0)
 		gpio_direction_output(pin, PWM_ON);
+#endif
 }
 
 static void sunxi_ctfb_mode_to_display_timing(const struct ctfb_res_modes *mode,

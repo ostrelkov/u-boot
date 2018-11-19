@@ -359,7 +359,6 @@ static int board_fix_lcd_olinuxino(void *blob)
 	* 		#size-cells = <0>;
 	* 		reg = <0>;
 	* 		remote-endpoint = <&panel_in_tcon0>;
-	* 		allwinner,tcon-channel = <0>;
 	* 	};
 	* };
 	*/

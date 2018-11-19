@@ -540,7 +540,10 @@ static int board_fix_lcd_olinuxino_lvds(void *blob)
 	gpios[0] = cpu_to_fdt32(pinctrl_phandle);
 	gpios[1] = cpu_to_fdt32(1);
 	gpios[2] = cpu_to_fdt32(2);
-	gpios[3] = cpu_to_fdt32(1);
+	if (!strcmp(lcd->info.name, "LCD-OLinuXino-15.6FHD"))
+		gpios[3] = cpu_to_fdt32(0);
+	else
+		gpios[3] = cpu_to_fdt32(1);
 	ret = fdt_setprop(blob, offset, "gpios", gpios, sizeof(gpios));
 	ret |= fdt_setprop_empty(blob, offset, "default-on");
 	if (ret < 0)
@@ -752,7 +755,6 @@ static int board_fix_lcd_olinuxino_lvds(void *blob)
 	* 		#size-cells = <0>;
 	* 		reg = <0>;
 	* 		remote-endpoint = <&panel_in_tcon0>;
-	* 		allwinner,tcon-channel = <0>;
 	* 	};
 	* };
 	*/
@@ -780,11 +782,12 @@ static int board_fix_lcd_olinuxino_lvds(void *blob)
 	if (offset < 0)
 		return offset;
 
-	ret = fdt_setprop_u32(blob, offset, "allwinner,tcon-channel", 0);
-	ret |= fdt_setprop_u32(blob, offset, "remote-endpoint", panel_endpoint_phandle);
+	ret = fdt_setprop_u32(blob, offset, "remote-endpoint", panel_endpoint_phandle);
 	ret |= fdt_setprop_u32(blob, offset, "reg", 0);
 	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 0);
 	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 1);
+	if (!strcmp(lcd->info.name, "LCD-OLinuXino-15.6FHD"))
+		ret |= fdt_setprop_empty(blob, offset, "allwinner,lvds-dual-link");
 	if (ret < 0)
  		return ret;
 
@@ -795,6 +798,10 @@ static int board_fix_lcd_olinuxino_lvds(void *blob)
 	offset = fdt_path_offset(blob, "/panel/port@0/endpoint@0");
 	if (offset < 0)
 		return offset;
+
+	ret = fdt_setprop_u32(blob, offset, "remote-endpoint", tcon0_endpoint_phandle);
+	if (ret < 0)
+ 		return ret;
 
 	return ret;
 
@@ -1071,7 +1078,6 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	* 		#size-cells = <0>;
 	* 		reg = <0>;
 	* 		remote-endpoint = <&panel_in_tcon0>;
-	* 		allwinner,tcon-channel = <0>;
 	* 	};
 	* };
 	*/
@@ -1092,8 +1098,7 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	if (offset < 0)
 		return offset;
 
-	ret = fdt_setprop_u32(blob, offset, "allwinner,tcon-channel", 0);
-	ret |= fdt_setprop_u32(blob, offset, "remote-endpoint", panel_endpoint_phandle);
+	ret = fdt_setprop_u32(blob, offset, "remote-endpoint", panel_endpoint_phandle);
 	ret |= fdt_setprop_u32(blob, offset, "reg", 0);
 	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 0);
 	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 1);

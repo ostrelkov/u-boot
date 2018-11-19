@@ -119,13 +119,13 @@ struct lcd_olinuxino_board lcd_olinuxino_boards[] = {
 		{
 			.pixelclock = 152000,
 			.hactive = 1920,
-			.hfp = 197,
-			.hbp = 100,
-			.hpw = 0,
+			.hfp = 150,
+			.hbp = 246,
+			.hpw = 60,
 			.vactive = 1080,
-			.vfp = 39,
-			.vbp = 23,
-			.vpw = 0,
+			.vfp = 15,
+			.vbp = 53,
+			.vpw = 9,
 			.refresh = 60,
 			.flags = 0
 		}
@@ -267,7 +267,6 @@ char * lcd_olinuxino_compatible()
 
 uint8_t lcd_olinuxino_dclk_phase()
 {
-	/* For now always return 0 */
 	return 0;
 }
 
