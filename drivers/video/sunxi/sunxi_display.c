@@ -688,11 +688,13 @@ static void sunxi_lcdc_tcon0_mode_set(const struct ctfb_res_modes *mode,
 	struct display_timing timing;
 
 #ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
-	int mux = (lcd_olinuxino_interface() == LCD_OLINUXINO_IF_PARALLEL ?
-		   SUNXI_GPD_LCD0 :
-		   SUNXI_GPD_LVDS0);
-	for (pin = SUNXI_GPD(0); pin <= SUNXI_GPD(19); pin++) {
-		sunxi_gpio_set_cfgpin(pin, mux);
+	if (lcd_olinuxino_interface() == LCD_OLINUXINO_IF_PARALLEL) {
+		for (pin = SUNXI_GPD(0); pin <= SUNXI_GPD(27); pin++)
+			sunxi_gpio_set_cfgpin(pin, SUNXI_GPD_LCD0);
+	} else {
+		for (pin = SUNXI_GPD(0); pin <= SUNXI_GPD(19); pin++)
+			sunxi_gpio_set_cfgpin(pin, SUNXI_GPD_LVDS0);
+	}
 #else
 #if defined CONFIG_MACH_SUN8I && defined CONFIG_VIDEO_LCD_IF_LVDS
 	for (pin = SUNXI_GPD(18); pin <= SUNXI_GPD(27); pin++) {
@@ -708,9 +710,8 @@ static void sunxi_lcdc_tcon0_mode_set(const struct ctfb_res_modes *mode,
 #ifdef CONFIG_VIDEO_LCD_PANEL_EDP_4_LANE_1620M_VIA_ANX9804
 		sunxi_gpio_set_drv(pin, 3);
 #endif
-#endif
 	}
-
+#endif
 	lcdc_pll_set(ccm, 0, mode->pixclock_khz, &clk_div, &clk_double,
 		     sunxi_is_composite());
 

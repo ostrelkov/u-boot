@@ -88,7 +88,10 @@ void lcdc_tcon0_mode_set(struct sunxi_lcdc_reg * const lcdc,
 			 int clk_div, bool for_ext_vga_dac,
 			 int depth, int dclk_phase)
 {
-	int bp, clk_delay, total, val;
+#ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
+	struct lcd_olinuxino_board *lcd = lcd_olinuxino_get_data();
+#endif
+	int bp, clk_delay, total, val, ch = 0;
 
 #ifndef CONFIG_SUNXI_DE2
 	/* Use tcon0 */
@@ -125,8 +128,11 @@ void lcdc_tcon0_mode_set(struct sunxi_lcdc_reg * const lcdc,
 		writel(0, &lcdc->tcon0_cpu_intf);
 	} else {
 		val = (depth == 18) ? 1 : 0;
-		writel(SUNXI_LCDC_TCON0_LVDS_INTF_BITWIDTH(val) |
-		       SUNXI_LCDC_TCON0_LVDS_INTF_MODE(1) |
+		if (!strcmp(lcd->info.name, "LCD-OLinuXino-15.6FHD"))
+			ch = 1;
+		writel(SUNXI_LCDC_TCON0_LVDS_INTF_CH(ch) |
+		       SUNXI_LCDC_TCON0_LVDS_INTF_BITWIDTH(val) |
+		       SUNXI_LCDC_TCON0_LVDS_INTF_MODE(0) |
 		       SUNXI_LCDC_TCON0_LVDS_CLK_SEL_TCON0, &lcdc->tcon0_lvds_intf);
 	}
 #else

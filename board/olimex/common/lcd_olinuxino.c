@@ -114,6 +114,25 @@ struct lcd_olinuxino_board lcd_olinuxino_boards[] = {
 	},
 	{
 		{
+			.name = "LCD-OLinuXino-15.6FHD",
+		},
+		{
+			.pixelclock = 152000,
+			.hactive = 1920,
+			.hfp = 197,
+			.hbp = 100,
+			.hpw = 0,
+			.vactive = 1080,
+			.vfp = 39,
+			.vbp = 23,
+			.vpw = 0,
+			.refresh = 60,
+			.flags = 0
+		}
+
+	},
+	{
+		{
 			.name = "",
 		},
 	},
@@ -175,14 +194,10 @@ char * lcd_olinuxino_video_mode()
 	struct lcd_olinuxino_board *lcd = lcd_olinuxino_boards;
 	struct lcd_olinuxino_mode *mode = NULL;
 	struct lcd_olinuxino_info *info = NULL;
-	char *s;
+	char *s = env_get("lcd_olinuxino");
 	int ret;
 
-	/*
-	 * Check if lcd_olinuxino is specify.
-	 */
-	s = env_get("lcd_olinuxino");
-	while (strlen(lcd->info.name)) {
+	while (s && strlen(lcd->info.name)) {
 		if (!strcmp(lcd->info.name, s)) {
 			info = &lcd->info;
 			mode = &lcd->mode;
@@ -276,7 +291,6 @@ struct lcd_olinuxino_board * lcd_olinuxino_get_data()
 {
 	struct lcd_olinuxino_board *lcd = lcd_olinuxino_boards;
 	char *s = env_get("lcd_olinuxino");
-	int ret;
 
 	if (!s)
 		return NULL;

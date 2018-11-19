@@ -227,7 +227,7 @@ static int do_monitor_set(cmd_tbl_t *cmdtp, int flag,
 #ifdef CONFIG_TARGET_A20_OLINUXINO
 	else if (!strcmp(p, "lcd-olinuxino-15.6"))
 		env_set("lcd_olinuxino", "LCD-OLinuXino-15.6");
-	else if (!strcmp(p, "lcd-olinuxino-15.6FHD"))
+	else if (!strcmp(p, "lcd-olinuxino-15.6fhd"))
 		env_set("lcd_olinuxino", "LCD-OLinuXino-15.6FHD");
 #endif
 	else
