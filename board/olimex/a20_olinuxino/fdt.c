@@ -314,7 +314,7 @@ static int board_fix_nand(void *blob)
 	ret |= fdt_appendprop_string(blob, offset, "pins", "PC16");
  	if (ret < 0)
  		return ret;
-#
+
 	/**
 	 * Find /soc@01c00000/nand@01c03000
 	 *
@@ -477,21 +477,25 @@ int olinuxino_fdt_fixup(void *blob)
 static int board_fix_lcd_olinuxino_lvds(void *blob)
 {
 	struct lcd_olinuxino_board *lcd = lcd_olinuxino_get_data();
-	int offset;
-	int ret = 0;
-	int gpio;
-	fdt32_t gpios[4];
-	fdt32_t ccu[2];
-	fdt32_t phandles[2];
-	uint32_t pins_phandle[2] = {};
 
-	uint32_t ccu_phandle;
-	uint32_t pinctrl_phandle;
 	uint32_t backlight_phandle;
-	uint32_t power_supply_phandle;
+	uint32_t ccu_phandle;
 	uint32_t panel_endpoint_phandle;
+	uint32_t pinctrl_phandle;
+	uint32_t pins_phandle[2] = {};
+	uint32_t power_supply_phandle;
+	uint32_t pwm_phandle;
 	uint32_t tcon0_endpoint_phandle;
 
+	fdt32_t ccu[2];
+	fdt32_t gpios[4];
+	fdt32_t levels[11];
+	fdt32_t phandles[2];
+
+	int gpio;
+	int i;
+	int offset;
+	int ret = 0;
 
 	offset = fdt_node_offset_by_compatible(blob, -1, FDT_COMP_PINCTRL);
  	if (offset < 0)
@@ -518,34 +522,75 @@ static int board_fix_lcd_olinuxino_lvds(void *blob)
 	if (power_supply_phandle < 0)
  		return offset;
 
-
-
 	/**
-	 * backlight: backlight {
-	 * 	compatible = "gpio-backlight";
-	 *	gpios = <&pio 1 2 GPIO_ACTIVE_LOW>;
-	 *	default-on;
+	 * &pwm {
+	 * 	pinctrl-names = "default";
+	 *	pinctrl-0 = <&pwm0_pins_a>;
+	 *	status = "okay";
 	 * };
 	 */
 
-	offset = fdt_path_offset(blob, FDT_PATH_ROOT);
- 	if (offset < 0)
- 		return offset;
+	offset = fdt_node_offset_by_compatible(blob, -1, FDT_COMP_PINCTRL);
+	if (offset < 0)
+		return offset;
+
+	pinctrl_phandle = fdt_get_phandle(blob, offset);
+	if (pinctrl_phandle < 0)
+		return offset;
+
+	offset = fdt_subnode_offset(blob, offset, "pwm0@0");
+	if (offset < 0)
+		return offset;
+
+	pins_phandle[0] = fdt_create_phandle(blob, offset);
+	if (!pins_phandle[0])
+		return -1;
+
+
+	offset = get_path_offset(blob, PATH_PWM, NULL);
+	if (offset < 0)
+		return offset;
+
+	ret |= fdt_set_node_status(blob, offset, FDT_STATUS_OKAY, 0);
+	ret |= fdt_setprop_u32(blob, offset, "pinctrl-0", pins_phandle[0]);
+	ret |= fdt_setprop_string(blob, offset, "pinctrl-names", "default");
+	if (ret < 0)
+		return ret;
+
+	pwm_phandle = fdt_create_phandle(blob, offset);
+	if (!pwm_phandle)
+		return -1;
+
+	/**
+	 * backlight: backlight {
+	 * 	compatible = "pwm-backlight";
+	 * 	power-supply = <&reg_vcc5v0>;
+	 * 	pwms = <&pwm 0 50000 0>;
+	 * 	brightness-levels = <0 10 20 30 40 50 60 70 80 90 100>;
+	 *	default-brightness-level = <10>;
+	 * };
+	 */
+
+	 offset = fdt_path_offset(blob, FDT_PATH_ROOT);
+	if (offset < 0)
+		return offset;
 
 	offset = fdt_add_subnode(blob, offset, "backlight");
 	if (offset < 0)
 		return offset;
 
-	ret |= fdt_setprop_string(blob, offset, "compatible", "gpio-backlight");
-	gpios[0] = cpu_to_fdt32(pinctrl_phandle);
-	gpios[1] = cpu_to_fdt32(1);
-	gpios[2] = cpu_to_fdt32(2);
-	if (!strcmp(lcd->info.name, "LCD-OLinuXino-15.6FHD"))
-		gpios[3] = cpu_to_fdt32(0);
-	else
-		gpios[3] = cpu_to_fdt32(1);
-	ret = fdt_setprop(blob, offset, "gpios", gpios, sizeof(gpios));
-	ret |= fdt_setprop_empty(blob, offset, "default-on");
+	gpios[0] = cpu_to_fdt32(pwm_phandle);
+	gpios[1] = cpu_to_fdt32(0);
+	gpios[2] = cpu_to_fdt32(50000);
+	gpios[3] = cpu_to_fdt32(0);
+	ret = fdt_setprop(blob, offset, "pwms", gpios, sizeof(gpios));
+
+	for (i = 0; i < 11; i++)
+		levels[i] = cpu_to_fdt32(i * 10);
+	ret |= fdt_setprop(blob, offset, "brightness-levels", levels, sizeof(levels));
+	ret |= fdt_setprop_u32(blob, offset, "default-brightness-level", 10);
+	ret |= fdt_setprop_u32(blob, offset, "power-supply", power_supply_phandle);
+	ret |= fdt_setprop_string(blob, offset, "compatible", "pwm-backlight");
 	if (ret < 0)
 		return ret;
 
@@ -809,24 +854,25 @@ static int board_fix_lcd_olinuxino_lvds(void *blob)
 
 static int board_fix_lcd_olinuxino_rgb(void *blob)
 {
-	uint32_t power_supply_phandle;
+	struct lcd_olinuxino_board *lcd = lcd_olinuxino_get_data();
+
 	uint32_t backlight_phandle;
+	uint32_t panel_endpoint_phandle;
 	uint32_t pinctrl_phandle;
 	uint32_t pins_phandle;
+	uint32_t power_supply_phandle;
 	uint32_t pwm_phandle;
-	uint32_t panel_endpoint_phandle;
 	uint32_t tcon0_endpoint_phandle;
 
 	fdt32_t gpios[4];
 	fdt32_t irq[3];
 	fdt32_t levels[11];
-	char path[64];
-	int offset;
-	int ret = 0;
-	int gpio;
-	char *s = env_get("lcd_olinuxino");
-	int i;
 
+	int gpio;
+	int i;
+	int offset;
+	char path[64];
+	int ret = 0;
 
 	offset = fdt_path_offset(blob, FDT_PATH_VCC5V0);
  	if (offset < 0)
@@ -835,7 +881,6 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	power_supply_phandle = fdt_get_phandle(blob, offset);
 	if (power_supply_phandle < 0)
  		return offset;
-
 
 	/**
 	 * &pwm {
@@ -860,7 +905,6 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	pins_phandle = fdt_create_phandle(blob, offset);
 	if (!pins_phandle)
 		return -1;
-
 
 	offset = get_path_offset(blob, PATH_PWM, NULL);
   	if (offset < 0)
@@ -912,7 +956,6 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	backlight_phandle = fdt_create_phandle(blob, offset);
 	if (!backlight_phandle)
 		return -1;
-
 
 	/**
 	 * lcd0_rgb888_pins: lcd0_rgb888_pins@0 {
@@ -1003,7 +1046,7 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	 * };
 	 */
 
-	if (!s) {
+	if (!lcd) {
 		offset = get_path_offset(blob, PATH_I2C2, path);
 	  	if (offset < 0)
 	  		return offset;
@@ -1025,7 +1068,7 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	ret = fdt_setprop_string(blob, offset, "compatible", lcd_olinuxino_compatible());
 	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 1);
 	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 0);
-	if (!s)
+	if (!lcd)
 		ret |= fdt_setprop_u32(blob, offset, "reg", 0x50);
 	ret |= fdt_setprop_string(blob, offset, "pinctrl-names", "default");
 	ret |= fdt_setprop_u32(blob, offset, "pinctrl-0", pins_phandle);
@@ -1041,8 +1084,6 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	ret |= fdt_set_node_status(blob, offset, FDT_STATUS_OKAY, 0);
 	if (ret < 0)
  		return ret;
-
-
 
 	offset = fdt_add_subnode(blob, offset, "port@0");
 	if (offset < 0)
@@ -1066,7 +1107,6 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	panel_endpoint_phandle = fdt_create_phandle(blob, offset);
 	if (!panel_endpoint_phandle)
 		return -1;
-
 
 	/**
 	* &tcon0_out {
@@ -1102,6 +1142,14 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	ret |= fdt_setprop_u32(blob, offset, "reg", 0);
 	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 0);
 	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 1);
+	if (olimex_board_is_micro() &&
+	    ((lcd && !strcmp(lcd->info.name, "LCD-OLinuXino-10")) ||
+	    (!lcd && lcd_olinuxino_eeprom.id == 9278) ||
+	    (!lcd && lcd_olinuxino_eeprom.id == 9284))) {
+		ret = fdt_setprop_empty(blob, offset, "allwinner,force-dithering");
+		if (ret)
+			return ret;
+	}
 	if (ret < 0)
  		return ret;
 
@@ -1109,7 +1157,7 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	if (!tcon0_endpoint_phandle)
 		return -1;
 
-	if (!s)
+	if (!lcd)
 		strcat(path, "/panel@50/port@0/endpoint@0");
 	else
 		strcat(path, "/panel/port@0/endpoint@0");
@@ -1122,27 +1170,38 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	if (ret < 0)
  		return ret;
 
-
 	/* Enable TS */
-	if (lcd_olinuxino_eeprom.id == 9278 ||	/* LCD-OLinuXino-7CTS */
-	    lcd_olinuxino_eeprom.id == 9284 ||	/* LCD-OLinuXino-10CTS */
-	    (s && !strcmp(s, "LCD-OLinuXino-5"))) {
+	if ((!lcd && (lcd_olinuxino_eeprom.id == 9278 ||	/* LCD-OLinuXino-7CTS */
+	    lcd_olinuxino_eeprom.id == 9284)) ||		/* LCD-OLinuXino-10CTS */
+	    (lcd && !strcmp(lcd->info.name, "LCD-OLinuXino-5"))) {
 
 		offset = get_path_offset(blob, PATH_I2C2, path);
 		if (offset < 0)
 			return offset;
 
-		offset = fdt_add_subnode(blob, offset, "gt911@14");
-		if (offset < 0)
-			return offset;
+		if (lcd && !strcmp(lcd->info.name, "LCD-OLinuXino-5")) {
+			offset = fdt_add_subnode(blob, offset, "ft5x@38");
+			if (offset < 0)
+				return offset;
 
-		if (s && !strcmp(s, "LCD-OLinuXino-5")) {
 			ret = fdt_setprop_string(blob, offset, "compatible", "edt,edt-ft5306");
 			ret |= fdt_setprop_u32(blob, offset, "reg", 0x38);
 			ret |= fdt_setprop_u32(blob, offset, "touchscreen-size-x", 800);
 			ret |= fdt_setprop_u32(blob, offset, "touchscreen-size-y", 480);
 		} else {
-			ret = fdt_setprop_string(blob, offset, "compatible", "goodix,gt911");
+			if (lcd_olinuxino_eeprom.id == 9278) {
+				offset = fdt_add_subnode(blob, offset, "gt911@14");
+				if (offset < 0)
+					return offset;
+
+				ret = fdt_setprop_string(blob, offset, "compatible", "goodix,gt911");
+			} else {
+				offset = fdt_add_subnode(blob, offset, "gt928@14");
+				if (offset < 0)
+					return offset;
+
+				ret = fdt_setprop_string(blob, offset, "compatible", "goodix,gt928");
+			}
 			ret |= fdt_setprop_u32(blob, offset, "reg", 0x14);
 		}
 		ret |= fdt_setprop_u32(blob, offset, "interrupt-parent", pinctrl_phandle);
@@ -1163,7 +1222,7 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 		gpios[0] = cpu_to_fdt32(pinctrl_phandle);
 		gpios[1] = cpu_to_fdt32(gpio >> 5);
 		gpios[2] = cpu_to_fdt32(gpio & 0x1F);
-		if (s && !strcmp(s, "LCD-OLinuXino-5"))
+		if (lcd && !strcmp(lcd->info.name, "LCD-OLinuXino-5"))
 			gpios[3] = cpu_to_fdt32(1);
 		else
 			gpios[3] = cpu_to_fdt32(0);
