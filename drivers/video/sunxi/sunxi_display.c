@@ -541,7 +541,11 @@ static void sunxi_lcdc_init(void)
 	setbits_le32(&ccm->ahb_gate1, 1 << AHB_GATE_OFFSET_LCD0);
 #ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
 	if (lcd_olinuxino_interface() == LCD_OLINUXINO_IF_LVDS)
-		setbits_le32(&ccm->lvds_clk_cfg, CCM_LVDS_CTRL_RST);
+#ifdef CONFIG_SUNXI_GEN_SUN6I
+	setbits_le32(&ccm->ahb_reset2_cfg, 1 << AHB_RESET_OFFSET_LVDS);
+#else
+	setbits_le32(&ccm->lvds_clk_cfg, CCM_LVDS_CTRL_RST);
+#endif
 #else
 #ifdef CONFIG_VIDEO_LCD_IF_LVDS
 #ifdef CONFIG_SUNXI_GEN_SUN6I
