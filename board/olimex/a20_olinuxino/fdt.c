@@ -759,6 +759,10 @@ static int board_fix_lcd_olinuxino_lvds(void *blob)
 	ret |= fdt_setprop_u32(blob, offset, "vsync-len", lcd->mode.vpw);
 	ret |= fdt_setprop_u32(blob, offset, "vfront-porch", lcd->mode.vfp);
 	ret |= fdt_setprop_u32(blob, offset, "vback-porch", lcd->mode.vbp);
+	if (!strcmp(lcd->info.name, "LCD-OLinuXino-15.6FHD")) {
+		ret |= fdt_setprop_u32(blob, offset, "hsync-active", 1);
+		ret |= fdt_setprop_u32(blob, offset, "vsync-active", 1);
+	}
 	if (ret < 0)
  		return ret;
 
