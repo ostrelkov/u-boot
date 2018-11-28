@@ -581,8 +581,13 @@ static void setup_environment(const void *fdt)
 		/**
 		 * Setup mtdparts
 		 * A20-SOM204xxxx has both eMMC and SPI flash
+		 * A20-OLinuXino-LIME2-e16Gs16M has both eMMC and SPI flash
+		 * A20-OLinuXino-LIME2-e4Gs16M has both eMMC and SPI flash
 		 */
-		if (eeprom->id == 8958 || eeprom->config.storage == 's') {
+		if (eeprom->id == 8958 ||
+		    eeprom->id == 9604 ||
+		    eeprom->id == 9613 ||
+		    eeprom->config.storage == 's') {
 			env_set("mtdids", SPI_MTDIDS);
 			env_set("mtdparts", SPI_MTDPARTS);
 		} else if (eeprom->config.storage == 'n') {
@@ -662,8 +667,12 @@ int misc_init_r(void)
 #endif
 
 #ifdef CONFIG_DM_SPI_FLASH
-	if (olimex_eeprom_is_valid() && eeprom->config.storage == 's') {
-		run_command("sf probe", 0);
+	if (olimex_eeprom_is_valid()) {
+		if (eeprom->config.storage == 's' ||
+		    eeprom->id == 8958 ||
+		    eeprom->id == 9604 ||
+		    eeprom->id == 96013)
+			run_command("sf probe", 0);
 	}
 #endif
 	return 0;

@@ -75,6 +75,26 @@ struct lcd_olinuxino_board lcd_olinuxino_boards[] = {
 	},
 	{
 		{
+			.name = "LCD-OLinuXino-7CTS",
+			.bus_format = MEDIA_BUS_FMT_RGB888_1X24,
+		},
+		{
+			.pixelclock = 51000,
+			.hactive = 1024,
+			.hfp = 154,
+			.hbp = 150,
+			.hpw = 10,
+			.vactive = 600,
+			.vfp = 12,
+			.vbp = 21,
+			.vpw = 2,
+			.refresh = 60,
+			.flags = 0
+		}
+
+	},
+	{
+		{
 			.name = "LCD-OLinuXino-10",
 			.bus_format = MEDIA_BUS_FMT_RGB888_1X24,
 		},
@@ -198,7 +218,7 @@ char * lcd_olinuxino_video_mode()
 	int ret;
 
 	while (s && strlen(lcd->info.name)) {
-		if (!strcmp(lcd->info.name, s)) {
+		if (!strncmp(lcd->info.name, s, strlen(s))) {
 			info = &lcd->info;
 			mode = &lcd->mode;
 			break;
@@ -253,13 +273,16 @@ char * lcd_olinuxino_compatible()
 	if (!s)
 		return "olimex,lcd-olinuxino";
 
-	if (!strcmp(s, "LCD-OLinuXino-4.3TS"))
+	if (!strncmp(s, "LCD-OLinuXino-4.3TS", strlen(s)))
 		return "olimex,lcd-olinuxino-4.3";
-	else if (!strcmp(s, "LCD-OLinuXino-5"))
+	else if (!strncmp(s, "LCD-OLinuXino-5", strlen(s)))
 		return "olimex,lcd-olinuxino-5";
-	else if (!strcmp(s, "LCD-OLinuXino-7"))
+	else if (!strncmp(s, "LCD-OLinuXino-7", strlen(s)))
 		return "olimex,lcd-olinuxino-7";
-	else if (!strcmp(s, "LCD-OLinuXino-10"))
+	else if (!strncmp(s, "LCD-OLinuXino-7CTS", strlen(s)))
+		/* LCD-OlinuXino-7CTS uses 10 inch resolution */
+		return "olimex,lcd-olinuxino-10";
+	else if (!strncmp(s, "LCD-OLinuXino-10", strlen(s)))
 		return "olimex,lcd-olinuxino-10";
 
 	return "olimex,lcd-olinuxino";
@@ -279,8 +302,8 @@ uint8_t lcd_olinuxino_interface()
 		return LCD_OLINUXINO_IF_PARALLEL;
 
 	/* Check LVDS or PARALLEL */
-	if (!strcmp(s, "LCD-OLinuXino-15.6") ||
-	    !strcmp(s, "LCD-OLinuXino-15.6FHD"))
+	if (!strncmp(s, "LCD-OLinuXino-15.6", strlen(s)) ||
+	    !strncmp(s, "LCD-OLinuXino-15.6FHD", strlen(s)))
 		return LCD_OLINUXINO_IF_LVDS;
 
 	return LCD_OLINUXINO_IF_PARALLEL;
@@ -295,7 +318,7 @@ struct lcd_olinuxino_board * lcd_olinuxino_get_data()
 		return NULL;
 
 	while (strlen(lcd->info.name)) {
-		if (!strcmp(lcd->info.name, s))
+		if (!strncmp(lcd->info.name, s, strlen(s)))
 			return lcd;
 		lcd++;
 	}

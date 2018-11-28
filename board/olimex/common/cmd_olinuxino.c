@@ -214,20 +214,20 @@ static int do_monitor_set(cmd_tbl_t *cmdtp, int flag,
 		p[i] = tolower(p[i]);
 	}
 
-	if (!strcmp(p, "lcd-olinuxino"))
+	if (!strncmp(p, "lcd-olinuxino", strlen(p)))
 		env_set("lcd_olinuxino", "");
-	else if (!strcmp(p, "lcd-olinuxino-4.3ts"))
+	else if (!strncmp(p, "lcd-olinuxino-4.3ts", strlen(p)))
 		env_set("lcd_olinuxino", "LCD-OLinuXino-4.3TS");
-	else if (!strcmp(p, "lcd-olinuxino-5"))
+	else if (!strncmp(p, "lcd-olinuxino-5", strlen(p)))
 		env_set("lcd_olinuxino", "LCD-OLinuXino-5");
-	else if (!strcmp(p, "lcd-olinuxino-7"))
+	else if (!strncmp(p, "lcd-olinuxino-7", strlen(p)))
 		env_set("lcd_olinuxino", "LCD-OLinuXino-7");
-	else if (!strcmp(p, "lcd-olinuxino-10"))
+	else if (!strncmp(p, "lcd-olinuxino-10", strlen(p)))
 		env_set("lcd_olinuxino", "LCD-OLinuXino-10");
 #ifdef CONFIG_TARGET_A20_OLINUXINO
-	else if (!strcmp(p, "lcd-olinuxino-15.6"))
+	else if (!strncmp(p, "lcd-olinuxino-15.6", strlen(p)))
 		env_set("lcd_olinuxino", "LCD-OLinuXino-15.6");
-	else if (!strcmp(p, "lcd-olinuxino-15.6fhd"))
+	else if (!strncmp(p, "lcd-olinuxino-15.6fhd", strlen(p)))
 		env_set("lcd_olinuxino", "LCD-OLinuXino-15.6FHD");
 #endif
 	else

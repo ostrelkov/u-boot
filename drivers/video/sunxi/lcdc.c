@@ -137,7 +137,7 @@ void lcdc_tcon0_mode_set(struct sunxi_lcdc_reg * const lcdc,
 		writel(0, &lcdc->tcon0_cpu_intf);
 	} else {
 		val = (depth == 18) ? 1 : 0;
-		if (!strcmp(lcd->info.name, "LCD-OLinuXino-15.6FHD"))
+		if (!strncmp(lcd->info.name, "LCD-OLinuXino-15.6FHD", strlen(lcd->info.name)))
 			ch = 1;
 		writel(SUNXI_LCDC_TCON0_LVDS_INTF_CH(ch) |
 		       SUNXI_LCDC_TCON0_LVDS_INTF_BITWIDTH(val) |

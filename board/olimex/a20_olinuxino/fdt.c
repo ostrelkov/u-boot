@@ -53,28 +53,37 @@ struct __path {
 	FDT_PATH("rtp",			0x01c25000),
 };
 
-#define NAND_PART(__label, __start, __lenght) \
+#define MTD_PART(__label, __start, __lenght) \
 	{ \
 		.label = __label, \
 		.addr = __start, \
 		.lenght = __lenght \
 	}
 
-struct __nand_partition {
+struct mtd_partition {
 	char label[32];
 	uint32_t addr;
 	uint32_t lenght;
 
-} nand_partitions[] = {
-	NAND_PART("NAND.rootfs",		0x02C00000,	0xFD400000),	/* TODO: Actually check nand size! */
-	NAND_PART("NAND.kernel",		0x01C00000,	SZ_16M),
-	NAND_PART("NAND.dtb",			0x01800000,	SZ_4M),
-	NAND_PART("NAND.u-boot-env.backup",	0x01400000,	SZ_4M),
-	NAND_PART("NAND.u-boot-env",		0x01000000,	SZ_4M),
-	NAND_PART("NAND.u-boot.backup",		0x00C00000,	SZ_4M),
-	NAND_PART("NAND.u-boot",		0x00800000,	SZ_4M),
-	NAND_PART("NAND.SPL.backup",		0x00400000,	SZ_4M),
-	NAND_PART("NAND.SPL",			0x00000000,	SZ_4M),
+};
+
+struct mtd_partition nand_partitions[] = {
+	MTD_PART("NAND.rootfs",			0x02C00000,	0xFD400000),	/* TODO: Actually check nand size! */
+	MTD_PART("NAND.kernel",			0x01C00000,	SZ_16M),
+	MTD_PART("NAND.dtb",			0x01800000,	SZ_4M),
+	MTD_PART("NAND.u-boot-env.backup",	0x01400000,	SZ_4M),
+	MTD_PART("NAND.u-boot-env",		0x01000000,	SZ_4M),
+	MTD_PART("NAND.u-boot.backup",		0x00C00000,	SZ_4M),
+	MTD_PART("NAND.u-boot",			0x00800000,	SZ_4M),
+	MTD_PART("NAND.SPL.backup",		0x00400000,	SZ_4M),
+	MTD_PART("NAND.SPL",			0x00000000,	SZ_4M),
+};
+
+struct mtd_partition spi_partitions[] = {
+	MTD_PART("SPI.user",			0x00240000,	0x00DC0000),
+	MTD_PART("SPI.u-boot-env.backup",	0x00220000,	SZ_128K),
+	MTD_PART("SPI.u-boot-env",		0x00200000,	SZ_128K),
+	MTD_PART("SPI.u-boot",			0x00000000,	SZ_2M),
 };
 
 static int get_path_offset(void *blob, enum devices dev, char *dpath)
@@ -137,16 +146,20 @@ static int board_fix_atecc508a(void *blob)
 
 static int board_fix_spi_flash(void *blob)
 {
-	uint32_t phandle;
+	char partition_name[64];
 	char path[64];
-	int ret = 0;
-	int offset;
+	int offset, parent, ret = 0;
+	uint32_t phandle;
+	uint8_t i;
+	fdt32_t reg[2];
+
 
 	/**
 	 * Some boards, have both eMMC and SPI flash:
 	 *   - A20-SOM204-1Gs16Me16G-MC (8958)
+	 *   - A20-OLinuXino-LIME2-e16Gs16M (9604)
 	 */
-	if (eeprom->config.storage != 's' && eeprom->id != 8958)
+	if (eeprom->config.storage != 's' && eeprom->id != 8958 && eeprom->id != 9604)
 		return 0;
 
 	/*
@@ -238,6 +251,28 @@ static int board_fix_spi_flash(void *blob)
 	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 1);
 	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 1);
 	ret |= fdt_setprop_string(blob, offset, "compatible", "fixed-partitions");
+
+	parent = offset;
+
+	/* Add partitions */
+	for (i = 0; i < ARRAY_SIZE(spi_partitions); i++) {
+
+		sprintf(partition_name, "partition@%x", spi_partitions[i].addr);
+		offset = fdt_add_subnode(blob, parent, partition_name);
+		if (offset < 0) {
+			printf("Failed to add %s: %s (%d)\n", partition_name, fdt_strerror(offset), offset);
+			return offset;
+		}
+
+
+		reg[0] = cpu_to_fdt32(spi_partitions[i].addr);
+		reg[1] = cpu_to_fdt32(spi_partitions[i].lenght);
+
+		ret |= fdt_setprop_string(blob, offset, "label" , spi_partitions[i].label);
+		ret |= fdt_setprop(blob, offset, "reg", reg, sizeof(reg));
+		if (ret < 0)
+			return ret;
+	}
 
 
 	/*
@@ -759,7 +794,7 @@ static int board_fix_lcd_olinuxino_lvds(void *blob)
 	ret |= fdt_setprop_u32(blob, offset, "vsync-len", lcd->mode.vpw);
 	ret |= fdt_setprop_u32(blob, offset, "vfront-porch", lcd->mode.vfp);
 	ret |= fdt_setprop_u32(blob, offset, "vback-porch", lcd->mode.vbp);
-	if (!strcmp(lcd->info.name, "LCD-OLinuXino-15.6FHD")) {
+	if (!strncmp(lcd->info.name, "LCD-OLinuXino-15.6FHD", strlen(lcd->info.name))) {
 		ret |= fdt_setprop_u32(blob, offset, "hsync-active", 1);
 		ret |= fdt_setprop_u32(blob, offset, "vsync-active", 1);
 	}
@@ -835,7 +870,7 @@ static int board_fix_lcd_olinuxino_lvds(void *blob)
 	ret |= fdt_setprop_u32(blob, offset, "reg", 0);
 	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 0);
 	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 1);
-	if (!strcmp(lcd->info.name, "LCD-OLinuXino-15.6FHD"))
+	if (!strncmp(lcd->info.name, "LCD-OLinuXino-15.6FHD", strlen(lcd->info.name)))
 		ret |= fdt_setprop_empty(blob, offset, "allwinner,lvds-dual-link");
 	if (ret < 0)
  		return ret;
@@ -1147,7 +1182,7 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	ret |= fdt_setprop_u32(blob, offset, "#size-cells", 0);
 	ret |= fdt_setprop_u32(blob, offset, "#address-cells", 1);
 	if (olimex_board_is_micro() &&
-	    ((lcd && !strcmp(lcd->info.name, "LCD-OLinuXino-10")) ||
+	    ((lcd && !strncmp(lcd->info.name, "LCD-OLinuXino-10", strlen(lcd->info.name))) ||
 	    (!lcd && lcd_olinuxino_eeprom.id == 9278) ||
 	    (!lcd && lcd_olinuxino_eeprom.id == 9284))) {
 		ret = fdt_setprop_empty(blob, offset, "allwinner,force-dithering");
@@ -1177,13 +1212,15 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	/* Enable TS */
 	if ((!lcd && (lcd_olinuxino_eeprom.id == 9278 ||	/* LCD-OLinuXino-7CTS */
 	    lcd_olinuxino_eeprom.id == 9284)) ||		/* LCD-OLinuXino-10CTS */
-	    (lcd && !strcmp(lcd->info.name, "LCD-OLinuXino-5"))) {
+	    (lcd &&
+	    (!strncmp(lcd->info.name, "LCD-OLinuXino-5", strlen(lcd->info.name)) ||
+	    !strncmp(lcd->info.name, "LCD-OLinuXino-7CTS", strlen(lcd->info.name))))) {
 
 		offset = get_path_offset(blob, PATH_I2C2, path);
 		if (offset < 0)
 			return offset;
 
-		if (lcd && !strcmp(lcd->info.name, "LCD-OLinuXino-5")) {
+		if (lcd && !strncmp(lcd->info.name, "LCD-OLinuXino-5", strlen(lcd->info.name))) {
 			offset = fdt_add_subnode(blob, offset, "ft5x@38");
 			if (offset < 0)
 				return offset;
@@ -1193,7 +1230,8 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 			ret |= fdt_setprop_u32(blob, offset, "touchscreen-size-x", 800);
 			ret |= fdt_setprop_u32(blob, offset, "touchscreen-size-y", 480);
 		} else {
-			if (lcd_olinuxino_eeprom.id == 9278) {
+			if ((!lcd && lcd_olinuxino_eeprom.id == 9278) ||
+			    (lcd && !strncmp(lcd->info.name, "LCD-OLinuXino-7CTS", strlen(lcd->info.name)))) {
 				offset = fdt_add_subnode(blob, offset, "gt911@14");
 				if (offset < 0)
 					return offset;
@@ -1226,7 +1264,7 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 		gpios[0] = cpu_to_fdt32(pinctrl_phandle);
 		gpios[1] = cpu_to_fdt32(gpio >> 5);
 		gpios[2] = cpu_to_fdt32(gpio & 0x1F);
-		if (lcd && !strcmp(lcd->info.name, "LCD-OLinuXino-5"))
+		if (lcd && !strncmp(lcd->info.name, "LCD-OLinuXino-5", strlen(lcd->info.name)))
 			gpios[3] = cpu_to_fdt32(1);
 		else
 			gpios[3] = cpu_to_fdt32(0);
@@ -1277,8 +1315,8 @@ int ft_system_setup(void *blob, bd_t *bd)
 		/* Check RGB or LVDS mode should be enabled */
 		s = env_get("lcd_olinuxino");
 		if (s != NULL &&
-		   (!strcmp(s, "LCD-OLinuXino-15.6") ||
-		   (!strcmp(s, "LCD-OLinuXino-15.6FHD"))))
+		   (!strncmp(s, "LCD-OLinuXino-15.6", strlen(s)) ||
+		   (!strncmp(s, "LCD-OLinuXino-15.6FHD", strlen(s)))))
 			ret = board_fix_lcd_olinuxino_lvds(blob);
 		else
 			ret = board_fix_lcd_olinuxino_rgb(blob);
