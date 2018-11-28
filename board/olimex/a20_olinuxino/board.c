@@ -671,7 +671,7 @@ int misc_init_r(void)
 		if (eeprom->config.storage == 's' ||
 		    eeprom->id == 8958 ||
 		    eeprom->id == 9604 ||
-		    eeprom->id == 96013)
+		    eeprom->id == 9613)
 			run_command("sf probe", 0);
 	}
 #endif

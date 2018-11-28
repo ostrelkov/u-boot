@@ -188,9 +188,11 @@ static int do_monitor_list(cmd_tbl_t *cmdtp, int flag,
 	printf("----------------------------------------\n");
 	printf("%-30s - %-10s\n", "LCD-OLinuXino", "Video outout to the LCD connector with AUTO detect function");
 	printf("%-30s - %-10s\n", "LCD-OLinuXino-4.3TS", "Video output to LCD-OLinuXino-4.3TS");
-	printf("%-30s - %-10s\n", "LCD-OLinuXino-7", "Video output to LCD-OLinuXino-7");
 	printf("%-30s - %-10s\n", "LCD-OLinuXino-5", "Video output to LCD-OLinuXino-5");
+	printf("%-30s - %-10s\n", "LCD-OLinuXino-7", "Video output to LCD-OLinuXino-7");
+	printf("%-30s - %-10s\n", "LCD-OLinuXino-7CTS", "Video output to LCD-OLinuXino-7CTS");
 	printf("%-30s - %-10s\n", "LCD-OLinuXino-10", "Video output to LCD-OLinuXino-10");
+	printf("%-30s - %-10s\n", "LCD-OLinuXino-10CTS", "Video output to LCD-OLinuXino-10CTS");
 #ifdef CONFIG_TARGET_A20_OLINUXINO
 	printf("%-30s - %-10s\n", "LCD-OLinuXino-15.6", "Video output to LCD-OLinuXino-15.6");
 	printf("%-30s - %-10s\n", "LCD-OLinuXino-15.6FHD", "Video output to LCD-OLinuXino-15.6FHD");
@@ -222,8 +224,12 @@ static int do_monitor_set(cmd_tbl_t *cmdtp, int flag,
 		env_set("lcd_olinuxino", "LCD-OLinuXino-5");
 	else if (!strncmp(p, "lcd-olinuxino-7", strlen(p)))
 		env_set("lcd_olinuxino", "LCD-OLinuXino-7");
+	else if (!strncmp(p, "lcd-olinuxino-7cts", strlen(p)))
+		env_set("lcd_olinuxino", "LCD-OLinuXino-7CTS");
 	else if (!strncmp(p, "lcd-olinuxino-10", strlen(p)))
 		env_set("lcd_olinuxino", "LCD-OLinuXino-10");
+	else if (!strncmp(p, "lcd-olinuxino-10cts", strlen(p)))
+		env_set("lcd_olinuxino", "LCD-OLinuXino-10CTS");
 #ifdef CONFIG_TARGET_A20_OLINUXINO
 	else if (!strncmp(p, "lcd-olinuxino-15.6", strlen(p)))
 		env_set("lcd_olinuxino", "LCD-OLinuXino-15.6");

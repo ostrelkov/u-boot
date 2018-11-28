@@ -1214,7 +1214,8 @@ static int board_fix_lcd_olinuxino_rgb(void *blob)
 	    lcd_olinuxino_eeprom.id == 9284)) ||		/* LCD-OLinuXino-10CTS */
 	    (lcd &&
 	    (!strncmp(lcd->info.name, "LCD-OLinuXino-5", strlen(lcd->info.name)) ||
-	    !strncmp(lcd->info.name, "LCD-OLinuXino-7CTS", strlen(lcd->info.name))))) {
+	    !strncmp(lcd->info.name, "LCD-OLinuXino-7CTS", strlen(lcd->info.name)) ||
+	    !strncmp(lcd->info.name, "LCD-OLinuXino-10CTS", strlen(lcd->info.name))))) {
 
 		offset = get_path_offset(blob, PATH_I2C2, path);
 		if (offset < 0)

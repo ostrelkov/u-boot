@@ -70,6 +70,8 @@ success:
 #ifdef CONFIG_VIDEO_LCD_PANEL_OLINUXINO
 static int board_fix_lcd_olinuxino(void *blob)
 {
+	struct lcd_olinuxino_board *lcd = lcd_olinuxino_get_data();
+	
 	uint32_t power_supply_phandle;
 	uint32_t backlight_phandle;
 	uint32_t pinctrl_phandle;
@@ -406,7 +408,10 @@ static int board_fix_lcd_olinuxino(void *blob)
 	 * Touchscreen should be enabled only if AUTODETECT is enabled
 	 * or if LCD-OLinuXino-5 is selected.
 	 */
-	if (s && strcmp(s, "LCD-OLinuXino-5"))
+	if (s &&
+	    strncmp(s, "LCD-OLinuXino-5", strlen(s)) &&
+	    strncmp(s, "LCD-OLinuXino-7CTS", strlen(s)) &&
+	    strncmp(s, "LCD-OLinuXino-10CTS", strlen(s)))
 		return 0;
 
 	/* Enable TS */
@@ -419,8 +424,8 @@ static int board_fix_lcd_olinuxino(void *blob)
 	if (ret < 0)
 		return ret;
 
-	if (s) {
-		offset = fdt_add_subnode(blob, offset, "edt-ft5306@38");
+	if (lcd && !strncmp(lcd->info.name, "LCD-OLinuXino-5", strlen(lcd->info.name))) {
+		offset = fdt_add_subnode(blob, offset, "ft5x@38");
 		if (offset < 0)
 			return offset;
 
@@ -429,11 +434,20 @@ static int board_fix_lcd_olinuxino(void *blob)
 		ret |= fdt_setprop_u32(blob, offset, "touchscreen-size-x", 800);
 		ret |= fdt_setprop_u32(blob, offset, "touchscreen-size-y", 480);
 	} else {
-		offset = fdt_add_subnode(blob, offset, "gt911@14");
-		if (offset < 0)
-			return offset;
+		if ((!lcd && lcd_olinuxino_eeprom.id == 9278) ||
+		    (lcd && !strncmp(lcd->info.name, "LCD-OLinuXino-7CTS", strlen(lcd->info.name)))) {
+			offset = fdt_add_subnode(blob, offset, "gt911@14");
+			if (offset < 0)
+				return offset;
 
-		ret = fdt_setprop_string(blob, offset, "compatible", "goodix,gt911");
+			ret = fdt_setprop_string(blob, offset, "compatible", "goodix,gt911");
+		} else {
+			offset = fdt_add_subnode(blob, offset, "gt928@14");
+			if (offset < 0)
+				return offset;
+
+			ret = fdt_setprop_string(blob, offset, "compatible", "goodix,gt928");
+		}
 		ret |= fdt_setprop_u32(blob, offset, "reg", 0x14);
 	}
 
@@ -455,7 +469,10 @@ static int board_fix_lcd_olinuxino(void *blob)
 	gpios[0] = cpu_to_fdt32(pinctrl_phandle);
 	gpios[1] = cpu_to_fdt32(gpio >> 5);
 	gpios[2] = cpu_to_fdt32(gpio & 0x1F);
-	gpios[3] = cpu_to_fdt32(s ? 1 : 0);
+	if (lcd && !strncmp(lcd->info.name, "LCD-OLinuXino-5", strlen(lcd->info.name)))
+		gpios[3] = cpu_to_fdt32(1);
+	else
+		gpios[3] = cpu_to_fdt32(0);
 	ret |= fdt_setprop(blob, offset, "reset-gpios", gpios, sizeof(gpios));
 
 	if (lcd_olinuxino_eeprom.id == 9278)

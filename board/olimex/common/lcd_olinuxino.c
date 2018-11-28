@@ -115,6 +115,26 @@ struct lcd_olinuxino_board lcd_olinuxino_boards[] = {
 	},
 	{
 		{
+			.name = "LCD-OLinuXino-10CTS",
+			.bus_format = MEDIA_BUS_FMT_RGB888_1X24,
+		},
+		{
+			.pixelclock = 51000,
+			.hactive = 1024,
+			.hfp = 154,
+			.hbp = 150,
+			.hpw = 10,
+			.vactive = 600,
+			.vfp = 12,
+			.vbp = 21,
+			.vpw = 2,
+			.refresh = 60,
+			.flags = 0
+		}
+
+	},
+	{
+		{
 			.name = "LCD-OLinuXino-15.6",
 		},
 		{
@@ -279,10 +299,9 @@ char * lcd_olinuxino_compatible()
 		return "olimex,lcd-olinuxino-5";
 	else if (!strncmp(s, "LCD-OLinuXino-7", strlen(s)))
 		return "olimex,lcd-olinuxino-7";
-	else if (!strncmp(s, "LCD-OLinuXino-7CTS", strlen(s)))
-		/* LCD-OlinuXino-7CTS uses 10 inch resolution */
-		return "olimex,lcd-olinuxino-10";
-	else if (!strncmp(s, "LCD-OLinuXino-10", strlen(s)))
+	else if (!strncmp(s, "LCD-OLinuXino-7CTS", strlen(s)) ||
+		 !strncmp(s, "LCD-OLinuXino-10", strlen(s)) ||
+		 !strncmp(s, "LCD-OLinuXino-10CTS", strlen(s)))
 		return "olimex,lcd-olinuxino-10";
 
 	return "olimex,lcd-olinuxino";
