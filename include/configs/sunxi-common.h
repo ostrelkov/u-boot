@@ -34,6 +34,8 @@
 #ifdef CONFIG_ARM64
 #define CONFIG_BUILD_TARGET "u-boot.itb"
 #define CONFIG_SYS_BOOTM_LEN		(32 << 20)
+#else
+#define CONFIG_SYS_BOOTM_LEN		(128 << 20)
 #endif
 
 /* Serial & console */
