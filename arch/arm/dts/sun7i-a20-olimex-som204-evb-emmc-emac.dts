@@ -1,0 +1,51 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Device Tree Source for A20-SOM204-EVB-eMMC Board
+ * and EMAC ethernet port
+ *
+ * Copyright (C) 2018, Oleg Strelkov <o.strelkov@gmail.com>
+ */
+
+/dts-v1/;
+#include "sun7i-a20-olimex-som204-evb.dts"
+
+/ {
+	model = "Olimex A20-SOM204-EVB-eMMC-emac";
+	compatible = "olimex,a20-olimex-som204-evb-emmc", "allwinner,sun7i-a20";
+
+	mmc2_pwrseq: mmc2_pwrseq {
+		compatible = "mmc-pwrseq-emmc";
+		reset-gpios = <&pio 2 16 GPIO_ACTIVE_LOW>;
+	};
+};
+
+&mmc2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&mmc2_pins_a>;
+	vmmc-supply = <&reg_vcc3v3>;
+	mmc-pwrseq = <&mmc2_pwrseq>;
+	bus-width = <4>;
+	non-removable;
+	status = "okay";
+
+	emmc: emmc@0 {
+		reg = <0>;
+		compatible = "mmc-card";
+		broken-hpi;
+	};
+};
+
+&gmac {
+	status = "disabled";
+};
+
+&emac {
+	pinctrl-names = "default";
+	pinctrl-0 = <&emac_pins_h>;
+	phy = <&phy1>;
+	status = "okay";
+
+	phy1: ethernet-phy@1 {
+		reg = <1>;
+	};
+};

@@ -513,9 +513,16 @@ static void sunxi_emac_board_setup(struct emac_eth_dev *priv)
 	setbits_le32(&sram->ctrl1, 0x5 << 2);
 
 	/* Configure pin mux settings for MII Ethernet */
+	/* TODO parse port from device tree */	
+#if defined CONFIG_SUN4I_EMAC_PH
+	for (pin = SUNXI_GPH(8); pin <= SUNXI_GPH(27); pin++)
+		sunxi_gpio_set_cfgpin(pin, SUNXI_GPH_EMAC);
+	printf("PH ");
+#else
 	for (pin = SUNXI_GPA(0); pin <= SUNXI_GPA(17); pin++)
 		sunxi_gpio_set_cfgpin(pin, SUNXI_GPA_EMAC);
-
+	printf("PA ");
+#endif
 	/* Set up clock gating */
 	setbits_le32(&ccm->ahb_gate0, 0x1 << AHB_GATE_OFFSET_EMAC);
 

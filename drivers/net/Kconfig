@@ -332,6 +332,18 @@ config SUN4I_EMAC
 	help
 	  This driver supports the Allwinner based SUN4I Ethernet MAC.
 
+config SUN4I_EMAC_PH
+	bool "Use PH instead of PA port"
+	depends on SUN4I_EMAC
+	default n
+	help
+	  This MAC is present in Sun4i and Sun7i Allwinner family SoCs.
+	  PA port is used in most boards.
+	  You must select Y to enable PH instead of PA port.
+
+	  If unsure, say N
+
+
 config SUN8I_EMAC
         bool "Allwinner Sun8i Ethernet MAC support"
         depends on DM_ETH

@@ -289,12 +289,6 @@ extern int soft_i2c_gpio_scl;
 
 #endif /* CONFIG_VIDEO_SUNXI */
 
-/* Ethernet support */
-
-#ifdef CONFIG_SUN7I_GMAC
-#define CONFIG_PHY_REALTEK
-#endif
-
 #ifdef CONFIG_USB_EHCI_HCD
 #define CONFIG_USB_OHCI_NEW
 #define CONFIG_USB_OHCI_SUNXI
