@@ -831,7 +831,7 @@ config ARCH_SUNXI
 	select CMD_MMC if MMC
 	select CMD_USB if DISTRO_DEFAULTS
 	select DM
-	select DM_ETH
+	select DM_ETH if !MACH_SUN5I
 	select DM_GPIO
 	select DM_KEYBOARD
 	select DM_SERIAL

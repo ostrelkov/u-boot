@@ -807,6 +807,14 @@ static void setup_environment(const void *fdt)
 	}
 }
 
+#if defined(CONFIG_USB_ETHER) && defined(CONFIG_USB_MUSB_GADGET) && \
+    !defined(CONFIG_DM_ETH)
+int board_eth_init(bd_t *bis)
+{
+	return usb_eth_initialize(bis);
+}
+#endif
+
 int misc_init_r(void)
 {
 	uint boot;
@@ -829,7 +837,7 @@ int misc_init_r(void)
 
 	setup_environment(gd->fdt_blob);
 
-#ifdef CONFIG_USB_ETHER
+#if defined(CONFIG_DM_ETH) && defined(CONFIG_USB_ETHER)
 	usb_ether_init();
 #endif
 
